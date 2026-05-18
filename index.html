@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>貼圖切割工具 (純網頁版)</title>
+    <title>貼圖切割工具</title>
     
     <!-- PWA 與 iOS 支援 -->
     <meta name="mobile-web-app-capable" content="yes">
@@ -11,10 +11,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="貼圖切割">
     <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgZmlsbD0iIzI1NjNlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTIlIiBkeT0iLjM1ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMzAwIiBmaWxsPSJ3aGl0ZSI+4pyCPC90ZXh0Pjwvc3ZnPg==">
-    <link id="manifest-link" rel="manifest" href="">
+    
+    <!-- 引入外部 Manifest (為了能真正安裝到 App 抽屜) -->
+    <link rel="manifest" href="manifest.json">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 JSZip 用於打包全部貼圖 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         .checkerboard {
@@ -25,9 +26,7 @@
             background-size: 24px 24px;
             background-position: 0 0, 12px 12px;
         }
-        canvas { 
-            touch-action: none; /* 防止手機滑動畫布時觸發網頁滾動 */
-        }
+        canvas { touch-action: none; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
@@ -41,7 +40,7 @@
         <div class="p-4 md:p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
             <div>
                 <h1 class="text-lg md:text-xl font-bold text-slate-800 flex items-center gap-2">✂️ 貼圖切割工具</h1>
-                <p class="text-[11px] md:text-xs text-slate-500 mt-1">單機執行，安全無隱私風險</p>
+                <p class="text-[11px] md:text-xs text-slate-500 mt-1">本機離線執行，保障隱私</p>
             </div>
             <!-- PWA 安裝按鈕 -->
             <button id="installAppBtn" class="hidden px-3 py-1.5 text-xs font-bold bg-green-500 hover:bg-green-600 text-white rounded shadow-sm transition flex items-center gap-1">
@@ -51,6 +50,7 @@
         </div>
 
         <div class="p-4 md:p-5 flex flex-col gap-4 flex-1">
+            
             <!-- 1. 檔案與底圖處理 -->
             <div class="flex flex-col gap-2">
                 <h2 class="font-bold text-sm text-slate-700">1. 檔案與底圖處理</h2>
@@ -213,13 +213,6 @@
             <button id="exportAllBtn" disabled class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded shadow transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed text-sm">
                 打包導出全部 (<span id="exportAllCount">0</span>) ZIP
             </button>
-            
-            <!-- 單機網頁下載按鈕 -->
-            <button id="downloadOfflineBtn" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-4 rounded shadow transition-colors text-xs mt-1 flex justify-center items-center gap-1" onclick="downloadOfflineHTML()">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                下載「單機網頁版 (HTML)」
-            </button>
-            
             <p id="statusMsg" class="text-xs text-center text-slate-500 mt-1 font-medium">請先選擇圖片</p>
         </div>
     </div>
@@ -276,6 +269,37 @@
     </div>
 
     <script>
+        // ==========================================
+        // PWA 註冊邏輯
+        // ==========================================
+        let deferredPrompt;
+        window.addEventListener('load', () => {
+            if ('serviceWorker' in navigator) {
+                // 註冊放在同一層目錄下的 sw.js
+                navigator.serviceWorker.register('./sw.js').catch(err => {
+                    console.log('SW registration failed:', err);
+                });
+            }
+        });
+
+        const installBtn = document.getElementById('installAppBtn');
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if(installBtn) installBtn.classList.remove('hidden');
+        });
+
+        if(installBtn) {
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') installBtn.classList.add('hidden');
+                    deferredPrompt = null;
+                }
+            });
+        }
+
         // ==========================================
         // UI 說明字典與圖示注入邏輯
         // ==========================================
@@ -844,7 +868,7 @@
                 els.ctx.fillText(`ID: ${i+1} (${dims.w}x${dims.h})`, box.left + 5/state.scale, box.top + fs + 5/state.scale);
 
                 if(isSel) {
-                    const hs = Math.max(8, 12 / state.scale); // 手機板稍微放大拖曳點
+                    const hs = Math.max(8, 12 / state.scale); 
                     els.ctx.fillStyle = '#ffffff'; els.ctx.strokeStyle = '#3b82f6';
                     const drawHandle = (hx, hy) => {
                         els.ctx.strokeRect(hx - hs/2, hy - hs/2, hs, hs);
@@ -868,14 +892,13 @@
         }
 
         // ==========================================
-        // 畫布滑鼠與觸控事件 (支援手機)
+        // 畫布滑鼠與觸控事件
         // ==========================================
         function getPointerPos(e) {
             const rect = els.canvas.getBoundingClientRect();
             const scaleX = els.canvas.width / rect.width, scaleY = els.canvas.height / rect.height;
             let cx = e.clientX, cy = e.clientY;
             
-            // 處理 Touch 事件
             if (e.touches && e.touches.length > 0) {
                 cx = e.touches[0].clientX; cy = e.touches[0].clientY;
             } else if (e.changedTouches && e.changedTouches.length > 0) {
@@ -891,7 +914,7 @@
 
             if (state.toolMode === 'wand') {
                 setStatus("魔術棒去背處理中...", true);
-                if(e.type === 'touchstart') e.preventDefault(); // 防止誤滑動
+                if(e.type === 'touchstart') e.preventDefault(); 
                 setTimeout(() => {
                     if(wandFill(pos.x, pos.y, 40)) {
                         setStatus(`已消除點擊區域背景！`);
@@ -901,7 +924,6 @@
                 return;
             }
 
-            // 判斷碰撞範圍 (手機板觸控容差值放大)
             const tol = Math.max(15, 20 / state.scale); 
             state.drag.active = true;
             state.drag.startX = pos.x; state.drag.startY = pos.y;
@@ -939,7 +961,7 @@
             if(newSelIdx !== null) {
                 state.selectedIndex = newSelIdx;
                 state.drag.origBox = { ...state.boxes[state.selectedIndex] };
-                if(e.type === 'touchstart') e.preventDefault(); // 抓到東西時才防止滾動
+                if(e.type === 'touchstart') e.preventDefault(); 
             } else {
                 state.boxes.push({left: pos.x, top: pos.y, right: pos.x, bottom: pos.y});
                 state.selectedIndex = state.boxes.length - 1;
@@ -950,8 +972,6 @@
 
         function handlePointerMove(e) {
             if(!state.drag.active || state.selectedIndex === null || state.toolMode !== 'box') return;
-            
-            // 在手機上拖拉框線時阻止網頁滾動
             if (e.cancelable && e.type === 'touchmove') e.preventDefault(); 
 
             const pos = getPointerPos(e);
@@ -993,42 +1013,7 @@
         }
 
         // ==========================================
-        // 單機版檔案下載 (不呼叫 fetch 以免被 CORS/CSP 阻擋)
-        // ==========================================
-        async function downloadOfflineHTML() {
-            if (location.protocol === 'file:') {
-                alert('您目前已經在使用單機版，無需再次下載！');
-                return;
-            }
-
-            setStatus("正在產生單機網頁版...", true);
-            try {
-                // 不使用 fetch 抓取外部資源以避免瀏覽器或 Canvas 安全沙盒阻擋。
-                // 直接擷取當前網頁的 HTML 結構，保留 CDN 連結。
-                let html = '<!DOCTYPE html>\n<html lang="zh-TW">\n' + document.documentElement.innerHTML + '\n</html>';
-                
-                // 清理動態產生的樣式，保持原始 CDN 引入即可
-                html = html.replace(/<style id="tailwind[^>]*>.*?<\/style>/gis, '');
-
-                const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = '貼圖切割工具_單機版.html';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                setStatus("✅ 單機版下載成功！存放在裝置中，點開即可使用。");
-            } catch(e) {
-                console.error(e);
-                alert("下載失敗，這可能是因為您所在的瀏覽器沙盒限制。\n💡 替代方案：\n請直接使用瀏覽器的「儲存網頁」功能 (電腦請按 Ctrl+S，手機請選擇儲存網頁)，並選擇「網頁，單一檔案」即可。");
-                setStatus("❌ 下載失敗，請使用瀏覽器內建的儲存功能。");
-            }
-        }
-
-        // ==========================================
-        // 導出功能 (生成與 ZIP 打包 相容 iOS/Android)
+        // 導出功能
         // ==========================================
         async function exportStickers(mode) {
             if(!state.processedCanvas || state.boxes.length === 0) return;
@@ -1117,7 +1102,6 @@
                                 <span class="absolute top-1 left-1 bg-black/50 text-white text-[9px] md:text-[10px] px-1 rounded">${finalW}x${finalH}</span>
                                 <img src="${dataUrl}" class="max-w-full max-h-full object-contain drop-shadow-sm touch-callout-default">
                             </div>
-                            <!-- 加上 target="_blank" 與 rel 增強手機下載相容性 -->
                             <a href="${dataUrl}" download="${fileName}" target="_blank" rel="noopener noreferrer" class="text-[11px] md:text-xs text-blue-600 font-bold bg-blue-50 px-3 py-1.5 rounded w-full text-center border border-blue-100 active:bg-blue-100">📥 儲存 (${fileName})</a>
                         </div>
                     `;
@@ -1137,7 +1121,6 @@
                         a.download = "LINE_Stickers.zip";
                         document.body.appendChild(a);
                         a.click();
-                        // 延遲移除 DOM 以確保 iOS/Android 觸發下載對話框
                         setTimeout(() => { 
                             document.body.removeChild(a); 
                             URL.revokeObjectURL(url);
@@ -1147,68 +1130,6 @@
                 }
             }, 50);
         }
-
-        // ==========================================
-        // PWA (Progressive Web App) 動態註冊模組
-        // ==========================================
-        let deferredPrompt;
-        function initPWA() {
-            if(location.protocol === 'file:') return; // 本地檔案不需要啟動 PWA 註冊
-
-            const manifest = {
-                name: "貼圖切割工具",
-                short_name: "貼圖切割",
-                description: "完全在瀏覽器內離線執行的貼圖切割工具",
-                start_url: location.href,
-                display: "standalone",
-                background_color: "#f8fafc",
-                theme_color: "#2563eb",
-                icons: [{
-                    src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgZmlsbD0iIzI1NjNlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM1ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMzAwIiBmaWxsPSJ3aGl0ZSI+4pyCPC90ZXh0Pjwvc3ZnPg==",
-                    sizes: "512x512",
-                    type: "image/svg+xml",
-                    purpose: "any maskable"
-                }]
-            };
-            // 替換 Manifest 為 Base64 Data URI，提升 iOS 支援度
-            const manifestUrl = 'data:application/manifest+json;base64,' + btoa(unescape(encodeURIComponent(JSON.stringify(manifest))));
-            document.getElementById('manifest-link').href = manifestUrl;
-
-            const swCode = `
-                const CACHE_NAME = 'sticker-pwa-v1';
-                self.addEventListener('install', event => self.skipWaiting());
-                self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
-                self.addEventListener('fetch', event => {
-                    event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
-                });
-            `;
-            const swBlob = new Blob([swCode], { type: 'application/javascript' });
-            const swUrl = URL.createObjectURL(swBlob);
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register(swUrl).catch(() => {});
-            }
-
-            const installBtn = document.getElementById('installAppBtn');
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredPrompt = e;
-                if(installBtn) installBtn.classList.remove('hidden');
-            });
-
-            if(installBtn) {
-                installBtn.addEventListener('click', async () => {
-                    if (deferredPrompt) {
-                        deferredPrompt.prompt();
-                        const { outcome } = await deferredPrompt.userChoice;
-                        if (outcome === 'accepted') installBtn.classList.add('hidden');
-                        deferredPrompt = null;
-                    }
-                });
-            }
-        }
-
-        initPWA();
-        init();
     </script>
 </body>
 </html>
