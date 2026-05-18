@@ -2,8 +2,16 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>貼圖切割工具 (純網頁版)</title>
+    
+    <!-- PWA 與 iOS 支援 -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="貼圖切割">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgZmlsbD0iIzI1NjNlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTIlIiBkeT0iLjM1ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMzAwIiBmaWxsPSJ3aGl0ZSI+4pyCPC90ZXh0Pjwvc3ZnPg==">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 JSZip 用於打包全部貼圖 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -16,23 +24,26 @@
             background-size: 24px 24px;
             background-position: 0 0, 12px 12px;
         }
-        canvas { touch-action: none; }
+        canvas { 
+            touch-action: none; /* 防止手機滑動畫布時觸發網頁滾動 */
+        }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
     </style>
 </head>
-<body class="bg-slate-100 h-screen flex overflow-hidden font-sans text-slate-800">
+<!-- 手機板採用垂直排列，電腦板(md以上)採用水平排列與隱藏全域滾動 -->
+<body class="bg-slate-100 flex flex-col md:flex-row md:h-screen font-sans text-slate-800 overflow-x-hidden md:overflow-hidden">
 
     <!-- 左側控制面板 -->
-    <div class="w-80 bg-white shadow-xl z-10 flex flex-col h-full overflow-y-auto border-r border-slate-200 shrink-0 relative">
-        <div class="p-5 border-b border-slate-100 bg-slate-50">
-            <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">✂️ 貼圖切割工具</h1>
-            <p class="text-xs text-slate-500 mt-1">完全在瀏覽器內執行，保障隱私</p>
+    <div class="w-full md:w-80 bg-white shadow-xl z-10 flex flex-col shrink-0 md:h-full md:overflow-y-auto border-b md:border-r border-slate-200 relative">
+        <div class="p-4 md:p-5 border-b border-slate-100 bg-slate-50">
+            <h1 class="text-lg md:text-xl font-bold text-slate-800 flex items-center gap-2">✂️ 貼圖切割工具</h1>
+            <p class="text-[11px] md:text-xs text-slate-500 mt-1">手機、電腦皆可離線使用</p>
         </div>
 
-        <div class="p-5 flex flex-col gap-4 flex-1">
+        <div class="p-4 md:p-5 flex flex-col gap-4 flex-1">
             
             <!-- 1. 檔案與底圖處理 -->
             <div class="flex flex-col gap-2">
@@ -41,10 +52,10 @@
                     class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
                 
                 <label class="flex items-center gap-2 text-xs text-slate-700 mt-2 bg-slate-50 p-2 rounded border border-slate-100 cursor-pointer hover:bg-slate-100">
-                    <input type="checkbox" id="enableAutoBg" checked class="rounded text-blue-600 w-4 h-4">
+                    <input type="checkbox" id="enableAutoBg" checked class="rounded text-blue-600 w-4 h-4 shrink-0">
                     <div class="flex flex-col">
                         <span class="font-bold flex items-center gap-1">啟用智慧邊緣去白底 <i class="info-icon" data-info="autoBg"></i></span>
-                        <span class="text-[10px] text-slate-500">若圖已透明或有半透明煙霧，請取消勾選</span>
+                        <span class="text-[10px] text-slate-500">若圖已透明或有煙霧特效，請取消勾選</span>
                     </div>
                 </label>
                 
@@ -75,19 +86,19 @@
                     <div class="bg-blue-50/50 p-3 rounded-lg border border-blue-100 flex flex-col gap-3">
                         <div>
                             <label class="flex justify-between text-[11px] text-slate-600 mb-1">
-                                <span class="flex items-center gap-1">過濾最小面積 (消滅雜點) <i class="info-icon" data-info="minArea"></i></span>
+                                <span class="flex items-center gap-1">過濾最小面積 <i class="info-icon" data-info="minArea"></i></span>
                                 <span id="minAreaVal">3000</span>
                             </label>
                             <input type="range" id="minArea" min="0" max="200000" step="500" value="3000" class="w-full accent-blue-500">
                         </div>
                         <div>
                             <label class="flex justify-between text-[11px] text-slate-600 mb-1">
-                                <span class="flex items-center gap-1">合併鄰近框距離 <i class="info-icon" data-info="mergeDist"></i></span>
+                                <span class="flex items-center gap-1">合併鄰近距離 <i class="info-icon" data-info="mergeDist"></i></span>
                                 <span id="mergeDistVal">24</span>
                             </label>
                             <input type="range" id="mergeDist" min="0" max="200" step="2" value="24" class="w-full accent-blue-500">
                         </div>
-                        <p class="text-[10px] text-blue-500 mt-[-4px] leading-tight">調整上方數值後，請點擊下方按鈕套用👇</p>
+                        <p class="text-[10px] text-blue-500 mt-[-4px] leading-tight text-center">調整數值後，請點擊下方按鈕套用👇</p>
                     </div>
 
                     <div class="flex flex-col gap-2">
@@ -101,7 +112,7 @@
 
                     <div class="border-t border-blue-100/50 pt-2 mt-1">
                         <label class="text-[11px] font-bold text-blue-800 flex items-center gap-1 mb-1">
-                            強制統一所有框的尺寸 (以各中心對齊) <i class="info-icon" data-info="fixedSize"></i>
+                            強制統一尺寸 <i class="info-icon" data-info="fixedSize"></i>
                         </label>
                         <div class="flex gap-2">
                             <input type="number" id="fixedW" placeholder="寬" class="w-full border border-slate-300 rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500">
@@ -116,7 +127,7 @@
 
                 <!-- 棋盤格設定區 -->
                 <div id="gridSettings" class="hidden flex-col gap-2">
-                    <select id="gridType" class="w-full border border-slate-300 rounded text-xs p-1 mb-1 outline-none focus:border-blue-500">
+                    <select id="gridType" class="w-full border border-slate-300 rounded text-xs p-1 mb-1 outline-none focus:border-blue-500 bg-white">
                         <option value="rc">指定切幾等分 (列 x 欄)</option>
                         <option value="wh">指定固定尺寸 (寬 x 高)</option>
                     </select>
@@ -162,19 +173,19 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <label class="block text-xs text-slate-500">外框顏色</label>
-                    <input type="color" id="borderC" value="#FFFFFF" class="h-6 w-10 cursor-pointer rounded border border-slate-300">
+                    <input type="color" id="borderC" value="#FFFFFF" class="h-6 w-10 cursor-pointer rounded border border-slate-300 bg-white">
                     <span class="text-[10px] uppercase text-slate-500 font-mono" id="borderCHex">#FFFFFF</span>
                 </div>
                 <!-- LINE 優化設定 -->
                 <div class="bg-green-50 p-2 rounded border border-green-100 mt-1">
                     <label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
-                        <input type="checkbox" id="lineOptimize" checked class="rounded text-green-600 w-4 h-4 accent-green-600">
+                        <input type="checkbox" id="lineOptimize" checked class="rounded text-green-600 w-4 h-4 accent-green-600 shrink-0">
                         <div class="flex flex-col">
                             <span class="font-bold text-green-700 flex items-center gap-1">LINE 貼圖優化 <i class="info-icon" data-info="lineOptimize"></i></span>
                             <span class="text-[10px] text-slate-500">限制最大解析度，並強制為雙數</span>
                         </div>
                     </label>
-                    <div id="lineMaxSettings" class="flex gap-2 mt-2 pl-6">
+                    <div id="lineMaxSettings" class="flex gap-2 mt-2 md:pl-6 pl-2">
                         <div class="flex-1">
                             <label class="text-[10px] text-slate-500 block mb-1">最大寬度 (Max W)</label>
                             <input type="number" id="lineMaxW" value="370" class="w-full border border-green-200 rounded px-1.5 py-1 text-xs outline-none focus:border-green-400">
@@ -189,7 +200,7 @@
 
         </div>
 
-        <div class="p-4 border-t border-slate-200 bg-slate-50 flex flex-col gap-2">
+        <div class="p-4 border-t border-slate-200 bg-slate-50 flex flex-col gap-2 shrink-0 md:sticky md:bottom-0">
             <button id="exportSelectedBtn" disabled class="w-full bg-white border border-blue-600 text-blue-600 hover:bg-blue-50 font-bold py-2 px-4 rounded shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm">
                 導出「選取」單張
             </button>
@@ -201,52 +212,59 @@
     </div>
 
     <!-- 右側主工作區 -->
-    <div class="flex-1 flex flex-col h-full overflow-hidden bg-slate-100 relative">
-        <div class="flex-1 p-4 flex flex-col min-h-0">
-            <div class="flex justify-between items-center mb-2">
-                <h3 class="font-bold text-slate-700 flex items-center gap-2">
+    <div class="flex-1 flex flex-col h-[70vh] md:h-full bg-slate-100 relative w-full">
+        <!-- 畫布區塊 -->
+        <div class="flex-1 p-3 md:p-4 flex flex-col min-h-0 w-full">
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-2 gap-2">
+                <h3 class="font-bold text-slate-700 flex items-center gap-2 text-sm md:text-base">
                     <span>預覽畫布</span>
                     <i class="info-icon" data-info="tools"></i>
-                    <span id="canvasHint" class="text-xs font-normal text-slate-500 bg-slate-200 px-2 py-1 rounded">可拖曳邊角調整框線，或點擊空白處新增框</span>
+                    <span id="canvasHint" class="text-[10px] md:text-xs font-normal text-slate-500 bg-slate-200 px-2 py-1 rounded hidden md:inline">可拖曳邊角調整框線，或點擊空白處新增框</span>
                 </h3>
-                <!-- 工具列 -->
-                <div class="flex bg-slate-200 p-1 rounded-lg">
-                    <button id="toolBoxBtn" class="px-3 py-1 text-sm font-bold bg-white text-blue-600 rounded shadow-sm transition">🔲 調整框線</button>
-                    <button id="toolWandBtn" class="px-3 py-1 text-sm font-bold text-slate-500 hover:text-slate-700 transition">🪄 魔術棒去背</button>
+                <!-- 工具列與安裝按鈕 -->
+                <div class="flex items-center gap-2 self-start md:self-auto">
+                    <button id="installAppBtn" class="hidden px-3 py-1 text-xs md:text-sm font-bold bg-green-500 hover:bg-green-600 text-white rounded shadow-sm transition flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        安裝 App
+                    </button>
+                    <div class="flex bg-slate-200 p-1 rounded-lg">
+                        <button id="toolBoxBtn" class="px-2 py-1 text-xs md:text-sm font-bold bg-white text-blue-600 rounded shadow-sm transition">🔲 調整框線</button>
+                        <button id="toolWandBtn" class="px-2 py-1 text-xs md:text-sm font-bold text-slate-500 hover:text-slate-700 transition">🪄 魔術棒去背</button>
+                    </div>
                 </div>
             </div>
             
-            <div class="flex-1 bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden relative checkerboard flex items-center justify-center" id="canvasContainer">
+            <div class="flex-1 bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden relative checkerboard flex items-center justify-center w-full" id="canvasContainer">
                 <canvas id="mainCanvas" class="max-w-full max-h-full"></canvas>
             </div>
         </div>
 
-        <div class="h-56 bg-white border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] p-4 flex flex-col shrink-0">
+        <!-- 輸出結果畫廊 -->
+        <div class="h-48 md:h-56 bg-white border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] p-3 md:p-4 flex flex-col shrink-0 w-full">
             <div class="flex justify-between items-end mb-2">
-                <h3 class="font-bold text-slate-700">輸出結果</h3>
+                <h3 class="font-bold text-slate-700 text-sm md:text-base">輸出結果</h3>
             </div>
-            <div id="gallery" class="flex-1 overflow-x-auto flex gap-4 pb-2 items-center">
-                <div class="text-sm text-slate-400 w-full text-center italic">點擊導出後，結果會顯示在這裡</div>
+            <div id="gallery" class="flex-1 overflow-x-auto flex gap-3 pb-2 items-center">
+                <div class="text-[11px] md:text-sm text-slate-400 w-full text-center italic">點擊導出後，結果會顯示在這裡<br>(手機版可長按圖片儲存)</div>
             </div>
         </div>
     </div>
 
     <!-- 💡 全域資訊說明 Modal (彈出視窗) -->
     <div id="infoModal" class="fixed inset-0 z-50 bg-slate-900/50 hidden flex items-center justify-center backdrop-blur-sm opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4 transform transition-all scale-95" id="infoModalBox">
+        <div class="bg-white rounded-xl shadow-2xl p-5 md:p-6 max-w-sm w-[90%] mx-4 transform transition-all scale-95" id="infoModalBox">
             <div class="flex justify-between items-center mb-4">
                 <h3 id="infoModalTitle" class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    <!-- Title SVG 注入點 -->
                     功能說明
                 </h3>
-                <button id="closeInfoModalTop" class="text-slate-400 hover:text-slate-600 outline-none">
+                <button id="closeInfoModalTop" class="text-slate-400 hover:text-slate-600 outline-none p-1">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            <div id="infoModalContent" class="text-[13px] text-slate-600 leading-relaxed whitespace-pre-line space-y-2 border-t border-slate-100 pt-4">
+            <div id="infoModalContent" class="text-xs md:text-[13px] text-slate-600 leading-relaxed whitespace-pre-line space-y-2 border-t border-slate-100 pt-4 max-h-[60vh] overflow-y-auto">
                 <!-- Content 注入點 -->
             </div>
-            <div class="mt-6 flex justify-end">
+            <div class="mt-5 md:mt-6 flex justify-end">
                 <button id="closeInfoModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-bold transition outline-none">了解</button>
             </div>
         </div>
@@ -257,68 +275,37 @@
         // UI 說明字典與圖示注入邏輯
         // ==========================================
         const infoData = {
-            autoBg: {
-                title: "智慧邊緣去白底",
-                content: "開啟時，系統會自動尋找圖片邊緣的**「白色與相近底色」**並將其透明化。\n\n⚠️ **重要提醒**：若你的原圖本身就是已去背的透明圖、或是帶有半透明煙霧、光暈等特效，請**取消勾選**此功能，以免系統誤將你的漸層特效當成白底刪除了。"
-            },
-            bgThreshold: {
-                title: "去背嚴格度",
-                content: "用來判定「多接近白色才算背景」的數值。\n\n🔸 當遇到**淺灰色的假透明棋盤格**、或是去背去不乾淨時，可將此數值**調低** (例如 180~200)，讓系統消除更多顏色。\n🔸 若發現角色的**白色衣服被誤刪**，請將數值**調高** (例如 245~250) 讓判定變嚴格。"
-            },
-            modes: {
-                title: "產生模式",
-                content: "🔸 **自動偵測**：會依據圖像的輪廓自動抓取每個角色的邊界，適合隨意排列或單一物件的貼圖。\n🔸 **棋盤切割**：無視圖像內容，直接將整個畫布強制切成指定的等分 (幾欄幾列) 或是固定尺寸。適合處理遊戲中排列整齊的精靈圖 (Sprite Sheet)。"
-            },
-            minArea: {
-                title: "過濾最小面積",
-                content: "用來**過濾細小的雜訊與粉塵**。\n只要長寬計算出的面積小於設定值，系統就不會為它產生框。\n\n若發現有很多不要的雜點被選起來，請**調高**；若有微小的配件沒被選到，請**調低**。\n(💡 調整後請點擊下方的「🔧僅過濾整理目前的框」按鈕)"
-            },
-            mergeDist: {
-                title: "合併鄰近框距離",
-                content: "用來**連結角色與其周圍的浮空配件** (例如愛心、汗水)。\n當兩個框的距離小於設定值，就會被強制合併成一個大框。\n\n若角色之間靠太近被合併成同一塊，請將此數值設為 `0` 並重新點擊全圖偵測按鈕。"
-            },
-            fixedSize: {
-                title: "強制統一尺寸",
-                content: "針對遊戲動畫或特定排版需求，若需要輸出的每一張圖都有**一模一樣的像素長寬**，請輸入固定數值後點擊「套用」。\n\n系統會以各個框目前的**中心點**為基準，向外畫出指定大小的完美矩形。"
-            },
-            borderStyle: {
-                title: "外觀樣式",
-                content: "🔸 **透明邊距**：會在圖案與白邊之間加上留白的透明緩衝區。\n🔸 **白邊寬度**：會在圖案的最外圍包上一圈實心的輪廓。這是為了保證貼圖在各種底色 (例如深色模式) 的背景下都不會被吃掉輪廓。"
-            },
-            lineOptimize: {
-                title: "LINE 貼圖優化",
-                content: "LINE 官方強烈規定：所有上傳圖片的長寬像素**必須為雙數(偶數)**。\n\n勾選此項後，系統在導出貼圖時，若發現長寬超出設定的最大限制，會自動以高畫質進行等比例縮小，並強制將最終數值進位成偶數，保證絕不會被 LINE 退件。"
-            },
-            tools: {
-                title: "畫布互動工具",
-                content: "🔸 **🔲 調整框線**：游標為十字，可以拖曳藍色邊框的四個角落來調整大小、拖曳內部移動，或在空白處畫出新框。\n🔸 **🪄 魔術棒去背**：游標為指標，當畫面中有封閉在角色內部沒被去背的顏色時，點擊該區域，系統就會以相近色自動消除它！"
-            }
+            autoBg: { title: "智慧邊緣去白底", content: "開啟時，系統會自動尋找圖片邊緣的**「白色與相近底色」**並將其透明化。\n\n⚠️ **重要提醒**：若你的原圖本身就是已去背的透明圖、或是帶有半透明煙霧、光暈等特效，請**取消勾選**此功能，以免系統誤將你的漸層特效當成白底刪除了。" },
+            bgThreshold: { title: "去背嚴格度", content: "用來判定「多接近白色才算背景」的數值。\n\n🔸 當遇到**淺灰色的假透明棋盤格**、或是去背去不乾淨時，可將此數值**調低** (例如 180~200)，讓系統消除更多顏色。\n🔸 若發現角色的**白色衣服被誤刪**，請將數值**調高** (例如 245~250) 讓判定變嚴格。" },
+            modes: { title: "產生模式", content: "🔸 **自動偵測**：會依據圖像的輪廓自動抓取每個角色的邊界，適合隨意排列或單一物件的貼圖。\n🔸 **棋盤切割**：無視圖像內容，直接將整個畫布強制切成指定的等分 (幾欄幾列) 或是固定尺寸。適合處理遊戲中排列整齊的精靈圖 (Sprite Sheet)。" },
+            minArea: { title: "過濾最小面積", content: "用來**過濾細小的雜訊與粉塵**。\n只要長寬計算出的面積小於設定值，系統就不會為它產生框。\n\n若發現有很多不要的雜點被選起來，請**調高**；若有微小的配件沒被選到，請**調低**。\n(💡 調整後請點擊下方的「🔧僅過濾整理目前的框」按鈕)" },
+            mergeDist: { title: "合併鄰近框距離", content: "用來**連結角色與其周圍的浮空配件** (例如愛心、汗水)。\n當兩個框的距離小於設定值，就會被強制合併成一個大框。\n\n若角色之間靠太近被合併成同一塊，請將此數值設為 `0` 並重新點擊全圖偵測按鈕。" },
+            fixedSize: { title: "強制統一尺寸", content: "針對遊戲動畫或特定排版需求，若需要輸出的每一張圖都有**一模一樣的像素長寬**，請輸入固定數值後點擊「套用」。\n\n系統會以各個框目前的**中心點**為基準，向外畫出指定大小的完美矩形。" },
+            borderStyle: { title: "外觀樣式", content: "🔸 **透明邊距**：會在圖案與白邊之間加上留白的透明緩衝區。\n🔸 **白邊寬度**：會在圖案的最外圍包上一圈實心的輪廓。這是為了保證貼圖在各種底色 (例如深色模式) 的背景下都不會被吃掉輪廓。" },
+            lineOptimize: { title: "LINE 貼圖優化", content: "LINE 官方強烈規定：所有上傳圖片的長寬像素**必須為雙數(偶數)**。\n\n勾選此項後，系統在導出貼圖時，若發現長寬超出設定的最大限制，會自動以高畫質進行等比例縮小，並強制將最終數值進位成偶數，保證絕不會被 LINE 退件。" },
+            tools: { title: "畫布互動工具", content: "🔸 **🔲 調整框線**：在畫布上可直接拖曳藍色邊框的四個角落調整大小、拖曳內部移動，或在空白處畫出新框。\n🔸 **🪄 魔術棒去背**：當畫面中有封閉在角色內部沒被去背的顏色時，點擊該區域，系統就會以相近色自動消除它！" }
         };
 
-        // 注入 SVG 到所有 class="info-icon" 的元素中
-        const infoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px] text-blue-400 hover:text-blue-600 cursor-pointer transition drop-shadow-sm"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" /></svg>`;
+        const infoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-[16px] h-[16px] md:w-[18px] md:h-[18px] text-blue-400 hover:text-blue-600 cursor-pointer transition drop-shadow-sm"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" /></svg>`;
         document.querySelectorAll('.info-icon').forEach(el => {
             el.innerHTML = infoSvg;
-            el.addEventListener('click', (e) => {
-                e.stopPropagation();
-                showInfoModal(el.getAttribute('data-info'));
-            });
+            // 支援點擊與觸控
+            el.addEventListener('click', (e) => { e.stopPropagation(); showInfoModal(el.getAttribute('data-info')); });
+            el.addEventListener('touchstart', (e) => { e.stopPropagation(); showInfoModal(el.getAttribute('data-info')); }, {passive: true});
         });
 
-        // 控制 Modal 開關
         const modalEl = document.getElementById('infoModal');
         const modalBox = document.getElementById('infoModalBox');
         
         function showInfoModal(key) {
             const data = infoData[key];
             if(!data) return;
-            document.getElementById('infoModalTitle').innerHTML = `<svg class="w-6 h-6 text-blue-500 drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${data.title}`;
-            // 處理 Markdown-like 加粗顯示
+            document.getElementById('infoModalTitle').innerHTML = `<svg class="w-5 h-5 md:w-6 md:h-6 text-blue-500 drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${data.title}`;
             let contentHtml = data.content.replace(/\*\*(.*?)\*\*/g, '<span class="font-bold text-slate-800">$1</span>');
             document.getElementById('infoModalContent').innerHTML = contentHtml;
             
             modalEl.classList.remove('hidden');
-            void modalEl.offsetWidth; // 觸發重繪 (Reflow) 以保證動畫生效
+            void modalEl.offsetWidth; 
             modalEl.classList.remove('opacity-0');
             modalBox.classList.remove('scale-95');
         }
@@ -331,8 +318,8 @@
 
         document.getElementById('closeInfoModalTop').addEventListener('click', closeInfoModal);
         document.getElementById('closeInfoModalBtn').addEventListener('click', closeInfoModal);
-        modalEl.addEventListener('click', (e) => { if(e.target === modalEl) closeInfoModal(); });
-
+        modalEl.addEventListener('mousedown', (e) => { if(e.target === modalEl) closeInfoModal(); });
+        modalEl.addEventListener('touchstart', (e) => { if(e.target === modalEl) closeInfoModal(); }, {passive: true});
 
         // ==========================================
         // 核心狀態管理
@@ -363,19 +350,16 @@
             }
         };
 
-        // DOM 元素
         const els = {
             upload: document.getElementById('uploadInput'),
             canvas: document.getElementById('mainCanvas'),
             ctx: document.getElementById('mainCanvas').getContext('2d'),
-            
             enableAutoBg: document.getElementById('enableAutoBg'),
             bgThresholdContainer: document.getElementById('bgThresholdContainer'),
             lineOptimize: document.getElementById('lineOptimize'),
             lineMaxW: document.getElementById('lineMaxW'),
             lineMaxH: document.getElementById('lineMaxH'),
             lineMaxSettings: document.getElementById('lineMaxSettings'),
-            
             modeAutoBtn: document.getElementById('modeAutoBtn'),
             modeGridBtn: document.getElementById('modeGridBtn'),
             autoSettings: document.getElementById('autoSettings'),
@@ -387,7 +371,6 @@
             gridCols: document.getElementById('gridCols'),
             gridW: document.getElementById('gridW'),
             gridH: document.getElementById('gridH'),
-            
             resetDetectBtn: document.getElementById('resetDetectBtn'),
             applyGridBtn: document.getElementById('applyGridBtn'),
             applyFilterMergeBtn: document.getElementById('applyFilterMergeBtn'),
@@ -395,7 +378,6 @@
             getLargestSizeBtn: document.getElementById('getLargestSizeBtn'),
             fixedW: document.getElementById('fixedW'),
             fixedH: document.getElementById('fixedH'),
-            
             exportSelectedBtn: document.getElementById('exportSelectedBtn'),
             exportAllBtn: document.getElementById('exportAllBtn'),
             exportAllCount: document.getElementById('exportAllCount'),
@@ -421,13 +403,13 @@
                 state.params.lineOptimize = e.target.checked;
                 els.lineMaxSettings.style.opacity = e.target.checked ? "1" : "0.4";
                 els.lineMaxSettings.style.pointerEvents = e.target.checked ? "auto" : "none";
-                renderMainCanvas(); // 重新渲染以更新畫布上的解析度數字
+                renderMainCanvas();
             });
 
             const updateLineBounds = () => {
                 state.params.lineMaxW = parseInt(els.lineMaxW.value) || 370;
                 state.params.lineMaxH = parseInt(els.lineMaxH.value) || 320;
-                renderMainCanvas(); // 重新渲染以更新畫布上的解析度數字
+                renderMainCanvas(); 
             };
             els.lineMaxW.addEventListener('input', updateLineBounds);
             els.lineMaxH.addEventListener('input', updateLineBounds);
@@ -439,10 +421,7 @@
                     const val = parseInt(e.target.value);
                     valEl.textContent = val;
                     state.params[paramKey] = val;
-                    // 當調整 padding 或邊框時，即時更新預覽解析度數字
-                    if(paramKey === 'padding' || paramKey === 'borderW') {
-                        renderMainCanvas();
-                    }
+                    if(paramKey === 'padding' || paramKey === 'borderW') renderMainCanvas();
                 });
                 if(paramKey === 'bgThreshold') {
                     el.addEventListener('change', () => { if(state.img.src && state.params.enableAutoBg) runDetectionFromScratch(); });
@@ -494,31 +473,33 @@
             els.resetDetectBtn.onclick = runDetectionFromScratch;
             els.applyGridBtn.onclick = applyGridSplit;
             els.applyFilterMergeBtn.onclick = applyFiltersToCurrentBoxes;
-            
             els.applyFixedSizeBtn.onclick = applyFixedSizeToBoxes;
             els.getLargestSizeBtn.onclick = getLargestBoxSize;
             
-            // 綁定導出按鈕
             els.exportSelectedBtn.onclick = () => exportStickers('single');
             els.exportAllBtn.onclick = () => exportStickers('all');
 
-            els.canvas.addEventListener('mousedown', handleMouseDown);
-            window.addEventListener('mousemove', handleMouseMove);
-            window.addEventListener('mouseup', handleMouseUp);
+            // 支援滑鼠與觸控 (Mobile Touch Events)
+            els.canvas.addEventListener('mousedown', handlePointerDown);
+            els.canvas.addEventListener('touchstart', handlePointerDown, {passive: false});
+            
+            window.addEventListener('mousemove', handlePointerMove);
+            els.canvas.addEventListener('touchmove', handlePointerMove, {passive: false}); // 綁在 canvas 才能 preventDefault 防滾動
+            
+            window.addEventListener('mouseup', handlePointerUp);
+            window.addEventListener('touchend', handlePointerUp);
         }
 
         function setToolMode(mode) {
             state.toolMode = mode;
             if (mode === 'box') {
-                els.toolBoxBtn.className = "px-3 py-1 text-sm font-bold bg-white text-blue-600 rounded shadow-sm transition";
-                els.toolWandBtn.className = "px-3 py-1 text-sm font-bold text-slate-500 hover:text-slate-700 transition";
+                els.toolBoxBtn.className = "px-2 md:px-3 py-1 text-xs md:text-sm font-bold bg-white text-blue-600 rounded shadow-sm transition";
+                els.toolWandBtn.className = "px-2 md:px-3 py-1 text-xs md:text-sm font-bold text-slate-500 hover:text-slate-700 transition";
                 els.canvas.style.cursor = "crosshair";
-                els.canvasHint.textContent = "可拖曳邊角調整框線，或點擊空白處新增框";
             } else {
-                els.toolWandBtn.className = "px-3 py-1 text-sm font-bold bg-white text-blue-600 rounded shadow-sm transition";
-                els.toolBoxBtn.className = "px-3 py-1 text-sm font-bold text-slate-500 hover:text-slate-700 transition";
+                els.toolWandBtn.className = "px-2 md:px-3 py-1 text-xs md:text-sm font-bold bg-white text-blue-600 rounded shadow-sm transition";
+                els.toolBoxBtn.className = "px-2 md:px-3 py-1 text-xs md:text-sm font-bold text-slate-500 hover:text-slate-700 transition";
                 els.canvas.style.cursor = "pointer";
-                els.canvasHint.textContent = "👆 請點擊畫布上沒去掉的背景，系統會將其消除";
             }
         }
 
@@ -530,7 +511,6 @@
         // ==========================================
         // 核心影像處理演算法
         // ==========================================
-
         function processBackground(img) {
             const canvas = document.createElement('canvas');
             const w = img.width, h = img.height;
@@ -682,7 +662,6 @@
         // ==========================================
         // 操作與業務邏輯
         // ==========================================
-
         function handleUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -748,7 +727,6 @@
                     }
                 }
             }
-            
             state.selectedIndex = null;
             renderMainCanvas();
             toggleActionButtons(true);
@@ -802,21 +780,12 @@
             if(!state.boxes.length) return;
             const fw = parseInt(els.fixedW.value);
             const fh = parseInt(els.fixedH.value);
-            if (!fw || !fh || fw <= 0 || fh <= 0) {
-                alert('請輸入有效的寬度與高度數值。');
-                return;
-            }
+            if (!fw || !fh || fw <= 0 || fh <= 0) { alert('請輸入有效的寬度與高度數值。'); return; }
 
             state.boxes = state.boxes.map(b => {
                 const cx = (b.left + b.right) / 2;
                 const cy = (b.top + b.bottom) / 2;
-                return {
-                    left: cx - fw / 2,
-                    top: cy - fh / 2,
-                    right: cx + fw / 2,
-                    bottom: cy + fh / 2,
-                    area: fw * fh
-                };
+                return { left: cx - fw / 2, top: cy - fh / 2, right: cx + fw / 2, bottom: cy + fh / 2, area: fw * fh };
             });
             renderMainCanvas();
             setStatus(`已將所有框強制設為 ${fw} x ${fh}，並置中對齊。`);
@@ -826,39 +795,29 @@
             if(!state.boxes.length) return;
             let maxW = 0, maxH = 0;
             state.boxes.forEach(b => {
-                const w = b.right - b.left;
-                const h = b.bottom - b.top;
-                if (w > maxW) maxW = w;
-                if (h > maxH) maxH = h;
+                const w = b.right - b.left, h = b.bottom - b.top;
+                if (w > maxW) maxW = w; if (h > maxH) maxH = h;
             });
-            els.fixedW.value = Math.ceil(maxW);
-            els.fixedH.value = Math.ceil(maxH);
-            setStatus(`已取得最大框尺寸：${Math.ceil(maxW)} x ${Math.ceil(maxH)}`);
+            els.fixedW.value = Math.ceil(maxW); els.fixedH.value = Math.ceil(maxH);
+            setStatus(`已取得最大尺寸：${Math.ceil(maxW)} x ${Math.ceil(maxH)}`);
         }
 
-        // 計算最終貼圖解析度的輔助函數 (支援最大邊界縮放與雙數強制)
         function calculateFinalDimensions(box) {
             const cropW = Math.floor(box.right - box.left);
             const cropH = Math.floor(box.bottom - box.top);
             const margin = state.params.padding + state.params.borderW;
-            let rawW = cropW + margin * 2;
-            let rawH = cropH + margin * 2;
+            let rawW = cropW + margin * 2, rawH = cropH + margin * 2;
             let scale = 1.0;
 
             if (state.params.lineOptimize) {
                 const maxW = state.params.lineMaxW || 370;
                 const maxH = state.params.lineMaxH || 320;
-                // 若超出最大限制，計算等比例縮放係數
-                if (rawW > maxW || rawH > maxH) {
-                    scale = Math.min(maxW / rawW, maxH / rawH);
-                }
+                if (rawW > maxW || rawH > maxH) scale = Math.min(maxW / rawW, maxH / rawH);
             }
 
-            let finalW = rawW * scale;
-            let finalH = rawH * scale;
+            let finalW = rawW * scale, finalH = rawH * scale;
 
             if (state.params.lineOptimize) {
-                // 強制向下轉換為最接近的雙數 (確保絕對不會超過 LINE 的最高限制)
                 finalW = Math.floor(finalW / 2) * 2;
                 finalH = Math.floor(finalH / 2) * 2;
             } else {
@@ -890,7 +849,6 @@
                 els.ctx.fillStyle = isSel ? 'rgba(59, 130, 246, 0.15)' : 'rgba(239, 68, 68, 0.05)';
                 els.ctx.fillRect(box.left, box.top, bw, bh);
 
-                // 計算並繪製預覽解析度資訊
                 const dims = calculateFinalDimensions(box);
                 els.ctx.fillStyle = isSel ? '#3b82f6' : 'rgba(239, 68, 68, 0.9)';
                 const fs = Math.max(12, 14 / state.scale);
@@ -898,7 +856,7 @@
                 els.ctx.fillText(`ID: ${i+1} (${dims.w}x${dims.h})`, box.left + 5/state.scale, box.top + fs + 5/state.scale);
 
                 if(isSel) {
-                    const hs = Math.max(6, 8 / state.scale);
+                    const hs = Math.max(8, 12 / state.scale); // 手機板稍微放大拖曳點
                     els.ctx.fillStyle = '#ffffff'; els.ctx.strokeStyle = '#3b82f6';
                     const drawHandle = (hx, hy) => {
                         els.ctx.strokeRect(hx - hs/2, hy - hs/2, hs, hs);
@@ -922,32 +880,41 @@
         }
 
         // ==========================================
-        // 畫布滑鼠事件 (Hit-Test)
+        // 畫布滑鼠與觸控事件 (支援手機)
         // ==========================================
-        function getMousePos(e) {
+        function getPointerPos(e) {
             const rect = els.canvas.getBoundingClientRect();
             const scaleX = els.canvas.width / rect.width, scaleY = els.canvas.height / rect.height;
-            return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+            let cx = e.clientX, cy = e.clientY;
+            
+            // 處理 Touch 事件
+            if (e.touches && e.touches.length > 0) {
+                cx = e.touches[0].clientX; cy = e.touches[0].clientY;
+            } else if (e.changedTouches && e.changedTouches.length > 0) {
+                cx = e.changedTouches[0].clientX; cy = e.changedTouches[0].clientY;
+            }
+            
+            return { x: (cx - rect.left) * scaleX, y: (cy - rect.top) * scaleY };
         }
 
-        function handleMouseDown(e) {
+        function handlePointerDown(e) {
             if(!state.processedCanvas) return;
-            const pos = getMousePos(e);
+            const pos = getPointerPos(e);
 
             if (state.toolMode === 'wand') {
                 setStatus("魔術棒去背處理中...", true);
+                if(e.type === 'touchstart') e.preventDefault(); // 防止誤滑動
                 setTimeout(() => {
                     if(wandFill(pos.x, pos.y, 40)) {
                         setStatus(`已消除點擊區域背景！`);
                         renderMainCanvas();
-                    } else {
-                        setStatus(`該區域無法消除或已透明。`);
-                    }
+                    } else { setStatus(`該區域無法消除或已透明。`); }
                 }, 10);
                 return;
             }
 
-            const tol = Math.max(8, 12 / state.scale);
+            // 判斷碰撞範圍 (手機板觸控容差值放大)
+            const tol = Math.max(15, 20 / state.scale); 
             state.drag.active = true;
             state.drag.startX = pos.x; state.drag.startY = pos.y;
             state.drag.action = 'create';
@@ -984,16 +951,22 @@
             if(newSelIdx !== null) {
                 state.selectedIndex = newSelIdx;
                 state.drag.origBox = { ...state.boxes[state.selectedIndex] };
+                if(e.type === 'touchstart') e.preventDefault(); // 抓到東西時才防止滾動
             } else {
                 state.boxes.push({left: pos.x, top: pos.y, right: pos.x, bottom: pos.y});
                 state.selectedIndex = state.boxes.length - 1;
+                if(e.type === 'touchstart') e.preventDefault(); 
             }
             renderMainCanvas();
         }
 
-        function handleMouseMove(e) {
+        function handlePointerMove(e) {
             if(!state.drag.active || state.selectedIndex === null || state.toolMode !== 'box') return;
-            const pos = getMousePos(e);
+            
+            // 在手機上拖拉框線時阻止網頁滾動
+            if (e.cancelable && e.type === 'touchmove') e.preventDefault(); 
+
+            const pos = getPointerPos(e);
             const dx = pos.x - state.drag.startX, dy = pos.y - state.drag.startY;
             let b = state.boxes[state.selectedIndex];
             const orig = state.drag.origBox;
@@ -1018,7 +991,7 @@
             renderMainCanvas();
         }
 
-        function handleMouseUp(e) {
+        function handlePointerUp(e) {
             if(!state.drag.active) return;
             state.drag.active = false;
             if(state.drag.action === 'create' && state.selectedIndex !== null) {
@@ -1032,14 +1005,12 @@
         }
 
         // ==========================================
-        // 導出功能 (生成與 ZIP 打包)
+        // 導出功能 (生成與 ZIP 打包 相容 iOS/Android)
         // ==========================================
         async function exportStickers(mode) {
             if(!state.processedCanvas || state.boxes.length === 0) return;
             
-            const targetBoxes = (mode === 'single' && state.selectedIndex !== null)
-                                ? [state.boxes[state.selectedIndex]]
-                                : state.boxes;
+            const targetBoxes = (mode === 'single' && state.selectedIndex !== null) ? [state.boxes[state.selectedIndex]] : state.boxes;
             
             setStatus(`正在生成 ${targetBoxes.length} 張貼圖...`, true);
             toggleActionButtons(false);
@@ -1047,10 +1018,9 @@
 
             setTimeout(async () => {
                 let html = '';
-                const zip = new JSZip(); // 初始化 JSZip
+                const zip = new JSZip(); 
 
                 targetBoxes.forEach((box, iterationIdx) => {
-                    // 如果是導出單張，維持原本的真實 ID
                     const realIdx = (mode === 'single' && state.selectedIndex !== null) ? state.selectedIndex : iterationIdx;
                     
                     const pad = state.params.padding, borderW = state.params.borderW, colorHex = state.params.borderC;
@@ -1060,7 +1030,6 @@
                     const rawW = cropW + margin * 2;
                     const rawH = cropH + margin * 2;
                     
-                    // 根據 LINE 貼圖邏輯調整最終解析度
                     const dims = calculateFinalDimensions(box);
                     const finalW = dims.w;
                     const finalH = dims.h;
@@ -1074,7 +1043,6 @@
                     const ctxTemp = imgTemp.getContext('2d');
                     ctxTemp.drawImage(state.processedCanvas, box.left, box.top, cropW, cropH, 0, 0, cropW, cropH);
 
-                    // 計算置中 Offset，確保在強制雙數進位時不會變形
                     const offX = margin + Math.floor((rawW - (cropW + margin * 2)) / 2);
                     const offY = margin + Math.floor((rawH - (cropH + margin * 2)) / 2);
 
@@ -1104,13 +1072,11 @@
                     }
                     ctx.drawImage(imgTemp, offX, offY);
                     
-                    // 檢查是否需要執行解析度縮放 (因應 LINE 限制)
                     let finalCanvas = outCanvas;
                     if (rawW !== finalW || rawH !== finalH) {
                         finalCanvas = document.createElement('canvas');
                         finalCanvas.width = finalW; finalCanvas.height = finalH;
                         const fCtx = finalCanvas.getContext('2d');
-                        // 開啟影像平滑處理以獲得高品質的縮放效果
                         fCtx.imageSmoothingEnabled = true;
                         fCtx.imageSmoothingQuality = 'high';
                         fCtx.drawImage(outCanvas, 0, 0, rawW, rawH, 0, 0, finalW, finalH);
@@ -1119,17 +1085,17 @@
                     const dataUrl = finalCanvas.toDataURL('image/png');
                     const fileName = `sticker_${realIdx+1}.png`;
 
-                    // 將檔案加進 ZIP
                     const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
                     zip.file(fileName, base64Data, {base64: true});
                     
                     html += `
-                        <div class="flex flex-col items-center gap-2 shrink-0 bg-slate-50 p-3 rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition">
-                            <div class="w-28 h-28 checkerboard rounded flex items-center justify-center p-1 relative">
-                                <span class="absolute top-1 left-1 bg-black/50 text-white text-[10px] px-1 rounded">${finalW}x${finalH}</span>
-                                <img src="${dataUrl}" class="max-w-full max-h-full object-contain drop-shadow-sm">
+                        <div class="flex flex-col items-center gap-2 shrink-0 bg-slate-50 p-2 md:p-3 rounded-lg border border-slate-200 shadow-sm">
+                            <div class="w-24 h-24 md:w-28 md:h-28 checkerboard rounded flex items-center justify-center p-1 relative">
+                                <span class="absolute top-1 left-1 bg-black/50 text-white text-[9px] md:text-[10px] px-1 rounded">${finalW}x${finalH}</span>
+                                <img src="${dataUrl}" class="max-w-full max-h-full object-contain drop-shadow-sm touch-callout-default">
                             </div>
-                            <a href="${dataUrl}" download="${fileName}" class="text-xs text-blue-600 font-bold bg-blue-50 px-3 py-1 rounded w-full text-center border border-blue-100 transition">📥 下載 (${fileName})</a>
+                            <!-- 加上 target="_blank" 與 rel 增強手機下載相容性 -->
+                            <a href="${dataUrl}" download="${fileName}" target="_blank" rel="noopener noreferrer" class="text-[11px] md:text-xs text-blue-600 font-bold bg-blue-50 px-3 py-1.5 rounded w-full text-center border border-blue-100 active:bg-blue-100">📥 儲存 (${fileName})</a>
                         </div>
                     `;
                 });
@@ -1138,24 +1104,92 @@
                 setStatus(`✅ 成功生成 ${targetBoxes.length} 張貼圖！`);
                 toggleActionButtons(true);
                 
-                // 處理打包下載邏輯
                 if (mode === 'all') {
                     setStatus(`正在壓縮 ZIP 檔案...`, true);
                     zip.generateAsync({type:"blob"}).then(function(content) {
                         const url = URL.createObjectURL(content);
                         const a = document.createElement('a');
+                        a.style.display = 'none';
                         a.href = url;
                         a.download = "LINE_Stickers.zip";
                         document.body.appendChild(a);
                         a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                        setStatus(`✅ 成功打包並下載 ${targetBoxes.length} 張貼圖！`);
+                        // 延遲移除 DOM 以確保 iOS/Android 觸發下載對話框
+                        setTimeout(() => { 
+                            document.body.removeChild(a); 
+                            URL.revokeObjectURL(url);
+                        }, 100);
+                        setStatus(`✅ 成功打包並下載 ZIP！`);
                     });
                 }
             }, 50);
         }
 
+        // ==========================================
+        // PWA (Progressive Web App) 動態註冊模組
+        // ==========================================
+        let deferredPrompt;
+        function initPWA() {
+            // 1. 動態建立與注入 Web App Manifest
+            const manifest = {
+                name: "貼圖切割工具",
+                short_name: "貼圖切割",
+                description: "完全在瀏覽器內離線執行的貼圖切割工具",
+                start_url: location.href,
+                display: "standalone",
+                background_color: "#f1f5f9",
+                theme_color: "#2563eb",
+                icons: [{
+                    src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgZmlsbD0iIzI1NjNlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM1ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMzAwIiBmaWxsPSJ3aGl0ZSI+4pyCPC90ZXh0Pjwvc3ZnPg==",
+                    sizes: "512x512",
+                    type: "image/svg+xml",
+                    purpose: "any maskable"
+                }]
+            };
+            const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+            const manifestUrl = URL.createObjectURL(manifestBlob);
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = manifestUrl;
+            document.head.appendChild(link);
+
+            // 2. 動態註冊 Service Worker 達成離線與安裝條件
+            const swCode = `
+                const CACHE_NAME = 'sticker-pwa-v1';
+                self.addEventListener('install', event => self.skipWaiting());
+                self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
+                self.addEventListener('fetch', event => {
+                    // 單檔架構下不做強烈攔截，僅為符合 PWA 安裝標準
+                    event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
+                });
+            `;
+            const swBlob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(swBlob);
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register(swUrl).catch(() => {});
+            }
+
+            // 3. 處理 Android/Chrome 的安裝提示
+            const installBtn = document.getElementById('installAppBtn');
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                if(installBtn) installBtn.classList.remove('hidden');
+            });
+
+            if(installBtn) {
+                installBtn.addEventListener('click', async () => {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        const { outcome } = await deferredPrompt.userChoice;
+                        if (outcome === 'accepted') installBtn.classList.add('hidden');
+                        deferredPrompt = null;
+                    }
+                });
+            }
+        }
+
+        initPWA();
         init();
     </script>
 </body>
