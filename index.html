@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>貼圖切割工具 (純網頁版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 JSZip 用於打包全部貼圖 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        .checkerboard {
+            background-color: #f3f5f8;
+            background-image: 
+                linear-gradient(45deg, #dde2ea 25%, transparent 25%, transparent 75%, #dde2ea 75%, #dde2ea),
+                linear-gradient(45deg, #dde2ea 25%, transparent 25%, transparent 75%, #dde2ea 75%, #dde2ea);
+            background-size: 24px 24px;
+            background-position: 0 0, 12px 12px;
+        }
+        canvas { touch-action: none; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    </style>
+</head>
+<body class="bg-slate-100 h-screen flex overflow-hidden font-sans text-slate-800">
+
+    <!-- 左側控制面板 -->
+    <div class="w-80 bg-white shadow-xl z-10 flex flex-col h-full overflow-y-auto border-r border-slate-200 shrink-0 relative">
+        <div class="p-5 border-b border-slate-100 bg-slate-50">
+            <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">✂️ 貼圖切割工具</h1>
+            <p class="text-xs text-slate-500 mt-1">完全在瀏覽器內執行，保障隱私</p>
+        </div>
+
+        <div class="p-5 flex flex-col gap-4 flex-1">
+            
+            <!-- 1. 檔案與底圖處理 -->
+            <div class="flex flex-col gap-2">
+                <h2 class="font-bold text-sm text-slate-700">1. 檔案與底圖處理</h2>
+                <input type="file" id="uploadInput" accept="image/png, image/jpeg, image/webp" 
+                    class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                
+                <label class="flex items-center gap-2 text-xs text-slate-700 mt-2 bg-slate-50 p-2 rounded border border-slate-100 cursor-pointer hover:bg-slate-100">
+                    <input type="checkbox" id="enableAutoBg" checked class="rounded text-blue-600 w-4 h-4">
+                    <div class="flex flex-col">
+                        <span class="font-bold flex items-center gap-1">啟用智慧邊緣去白底 <i class="info-icon" data-info="autoBg"></i></span>
+                        <span class="text-[10px] text-slate-500">若圖已透明或有半透明煙霧，請取消勾選</span>
+                    </div>
+                </label>
+                
+                <div id="bgThresholdContainer" class="px-2">
+                    <label class="flex justify-between text-[11px] text-slate-500 mb-1">
+                        <span class="flex items-center gap-1">去背嚴格度 (越低去越多) <i class="info-icon" data-info="bgThreshold"></i></span>
+                        <span id="bgThresholdVal">240</span>
+                    </label>
+                    <input type="range" id="bgThreshold" min="100" max="255" step="1" value="240" class="w-full accent-blue-600">
+                </div>
+            </div>
+
+            <!-- 2. 框線偵測與整理 -->
+            <div class="flex flex-col gap-3 pt-3 border-t border-slate-100">
+                <h2 class="font-bold text-sm text-slate-700 flex items-center justify-between">
+                    2. 框線參數與產生
+                    <i class="info-icon" data-info="modes"></i>
+                </h2>
+                
+                <!-- 模式切換 -->
+                <div class="flex gap-2 p-1 bg-slate-100 rounded-lg">
+                    <button id="modeAutoBtn" class="flex-1 text-xs py-1.5 rounded bg-white text-blue-700 font-bold shadow-sm transition">自動偵測</button>
+                    <button id="modeGridBtn" class="flex-1 text-xs py-1.5 rounded text-slate-500 hover:text-slate-700 font-bold transition">棋盤切割</button>
+                </div>
+
+                <!-- 自動偵測設定區 -->
+                <div id="autoSettings" class="flex flex-col gap-3">
+                    <div class="bg-blue-50/50 p-3 rounded-lg border border-blue-100 flex flex-col gap-3">
+                        <div>
+                            <label class="flex justify-between text-[11px] text-slate-600 mb-1">
+                                <span class="flex items-center gap-1">過濾最小面積 (消滅雜點) <i class="info-icon" data-info="minArea"></i></span>
+                                <span id="minAreaVal">3000</span>
+                            </label>
+                            <input type="range" id="minArea" min="0" max="200000" step="500" value="3000" class="w-full accent-blue-500">
+                        </div>
+                        <div>
+                            <label class="flex justify-between text-[11px] text-slate-600 mb-1">
+                                <span class="flex items-center gap-1">合併鄰近框距離 <i class="info-icon" data-info="mergeDist"></i></span>
+                                <span id="mergeDistVal">24</span>
+                            </label>
+                            <input type="range" id="mergeDist" min="0" max="200" step="2" value="24" class="w-full accent-blue-500">
+                        </div>
+                        <p class="text-[10px] text-blue-500 mt-[-4px] leading-tight">調整上方數值後，請點擊下方按鈕套用👇</p>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <button id="applyFilterMergeBtn" disabled class="w-full text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 border border-blue-300 py-2.5 rounded font-bold transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                            🔧 僅過濾 / 整理目前的框
+                        </button>
+                        <button id="resetDetectBtn" disabled class="w-full text-xs bg-slate-200 hover:bg-slate-300 py-2 rounded text-slate-700 font-bold transition disabled:opacity-50 disabled:cursor-not-allowed">
+                            🔄 重新全圖偵測 (重頭洗牌)
+                        </button>
+                    </div>
+
+                    <div class="border-t border-blue-100/50 pt-2 mt-1">
+                        <label class="text-[11px] font-bold text-blue-800 flex items-center gap-1 mb-1">
+                            強制統一所有框的尺寸 (以各中心對齊) <i class="info-icon" data-info="fixedSize"></i>
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="number" id="fixedW" placeholder="寬" class="w-full border border-slate-300 rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500">
+                            <input type="number" id="fixedH" placeholder="高" class="w-full border border-slate-300 rounded px-1.5 py-1 text-xs outline-none focus:border-blue-500">
+                            <button id="applyFixedSizeBtn" disabled class="bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded font-bold transition disabled:opacity-50 disabled:cursor-not-allowed">套用</button>
+                        </div>
+                        <button id="getLargestSizeBtn" disabled class="mt-1 w-full text-left text-[10px] text-blue-600 hover:text-blue-800 bg-transparent disabled:opacity-50 transition">
+                            ↳ 抓取目前畫布上「最大的框」的尺寸
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 棋盤格設定區 -->
+                <div id="gridSettings" class="hidden flex-col gap-2">
+                    <select id="gridType" class="w-full border border-slate-300 rounded text-xs p-1 mb-1 outline-none focus:border-blue-500">
+                        <option value="rc">指定切幾等分 (列 x 欄)</option>
+                        <option value="wh">指定固定尺寸 (寬 x 高)</option>
+                    </select>
+                    <div id="gridRC" class="flex gap-2">
+                        <div class="flex-1">
+                            <label class="text-[10px] text-slate-500 block mb-1">列數 (Rows)</label>
+                            <input type="number" id="gridRows" value="1" min="1" class="w-full border border-slate-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500">
+                        </div>
+                        <div class="flex-1">
+                            <label class="text-[10px] text-slate-500 block mb-1">欄數 (Cols)</label>
+                            <input type="number" id="gridCols" value="8" min="1" class="w-full border border-slate-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div id="gridWH" class="flex gap-2 hidden">
+                        <div class="flex-1">
+                            <label class="text-[10px] text-slate-500 block mb-1">框寬度 (W)</label>
+                            <input type="number" id="gridW" value="64" min="1" class="w-full border border-slate-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500">
+                        </div>
+                        <div class="flex-1">
+                            <label class="text-[10px] text-slate-500 block mb-1">框高度 (H)</label>
+                            <input type="number" id="gridH" value="64" min="1" class="w-full border border-slate-300 rounded px-2 py-1 text-xs outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+                    <button id="applyGridBtn" disabled class="w-full text-xs bg-slate-200 hover:bg-slate-300 py-2 rounded text-slate-700 font-bold transition mt-1 disabled:opacity-50 disabled:cursor-not-allowed">
+                        🔠 套用棋盤切割 (會覆蓋目前的框)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. 輸出樣式 -->
+            <div class="flex flex-col gap-3 pt-3 border-t border-slate-100">
+                <h2 class="font-bold text-sm text-slate-700 flex items-center justify-between">
+                    3. 輸出樣式
+                    <i class="info-icon" data-info="borderStyle"></i>
+                </h2>
+                <div>
+                    <label class="flex justify-between text-xs text-slate-500 mb-1"><span>透明邊距 (Padding)</span><span id="paddingVal">20</span></label>
+                    <input type="range" id="padding" min="0" max="100" value="20" class="w-full accent-slate-500">
+                </div>
+                <div>
+                    <label class="flex justify-between text-xs text-slate-500 mb-1"><span>白邊寬度</span><span id="borderWVal">8</span></label>
+                    <input type="range" id="borderW" min="0" max="40" value="8" class="w-full accent-slate-500">
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="block text-xs text-slate-500">外框顏色</label>
+                    <input type="color" id="borderC" value="#FFFFFF" class="h-6 w-10 cursor-pointer rounded border border-slate-300">
+                    <span class="text-[10px] uppercase text-slate-500 font-mono" id="borderCHex">#FFFFFF</span>
+                </div>
+                <!-- LINE 優化設定 -->
+                <div class="bg-green-50 p-2 rounded border border-green-100 mt-1">
+                    <label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                        <input type="checkbox" id="lineOptimize" checked class="rounded text-green-600 w-4 h-4 accent-green-600">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-green-700 flex items-center gap-1">LINE 貼圖優化 <i class="info-icon" data-info="lineOptimize"></i></span>
+                            <span class="text-[10px] text-slate-500">限制最大解析度，並強制為雙數</span>
+                        </div>
+                    </label>
+                    <div id="lineMaxSettings" class="flex gap-2 mt-2 pl-6">
+                        <div class="flex-1">
+                            <label class="text-[10px] text-slate-500 block mb-1">最大寬度 (Max W)</label>
+                            <input type="number" id="lineMaxW" value="370" class="w-full border border-green-200 rounded px-1.5 py-1 text-xs outline-none focus:border-green-400">
+                        </div>
+                        <div class="flex-1">
+                            <label class="text-[10px] text-slate-500 block mb-1">最大高度 (Max H)</label>
+                            <input type="number" id="lineMaxH" value="320" class="w-full border border-green-200 rounded px-1.5 py-1 text-xs outline-none focus:border-green-400">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="p-4 border-t border-slate-200 bg-slate-50 flex flex-col gap-2">
+            <button id="exportSelectedBtn" disabled class="w-full bg-white border border-blue-600 text-blue-600 hover:bg-blue-50 font-bold py-2 px-4 rounded shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm">
+                導出「選取」單張
+            </button>
+            <button id="exportAllBtn" disabled class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded shadow transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed text-sm">
+                打包導出全部 (<span id="exportAllCount">0</span>) ZIP
+            </button>
+            <p id="statusMsg" class="text-xs text-center text-slate-500 mt-1 font-medium">請先選擇圖片</p>
+        </div>
+    </div>
+
+    <!-- 右側主工作區 -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden bg-slate-100 relative">
+        <div class="flex-1 p-4 flex flex-col min-h-0">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="font-bold text-slate-700 flex items-center gap-2">
+                    <span>預覽畫布</span>
+                    <i class="info-icon" data-info="tools"></i>
+                    <span id="canvasHint" class="text-xs font-normal text-slate-500 bg-slate-200 px-2 py-1 rounded">可拖曳邊角調整框線，或點擊空白處新增框</span>
+                </h3>
+                <!-- 工具列 -->
+                <div class="flex bg-slate-200 p-1 rounded-lg">
+                    <button id="toolBoxBtn" class="px-3 py-1 text-sm font-bold bg-white text-blue-600 rounded shadow-sm transition">🔲 調整框線</button>
+                    <button id="toolWandBtn" class="px-3 py-1 text-sm font-bold text-slate-500 hover:text-slate-700 transition">🪄 魔術棒去背</button>
+                </div>
+            </div>
+            
+            <div class="flex-1 bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden relative checkerboard flex items-center justify-center" id="canvasContainer">
+                <canvas id="mainCanvas" class="max-w-full max-h-full"></canvas>
+            </div>
+        </div>
+
+        <div class="h-56 bg-white border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] p-4 flex flex-col shrink-0">
+            <div class="flex justify-between items-end mb-2">
+                <h3 class="font-bold text-slate-700">輸出結果</h3>
+            </div>
+            <div id="gallery" class="flex-1 overflow-x-auto flex gap-4 pb-2 items-center">
+                <div class="text-sm text-slate-400 w-full text-center italic">點擊導出後，結果會顯示在這裡</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 💡 全域資訊說明 Modal (彈出視窗) -->
+    <div id="infoModal" class="fixed inset-0 z-50 bg-slate-900/50 hidden flex items-center justify-center backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4 transform transition-all scale-95" id="infoModalBox">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="infoModalTitle" class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <!-- Title SVG 注入點 -->
+                    功能說明
+                </h3>
+                <button id="closeInfoModalTop" class="text-slate-400 hover:text-slate-600 outline-none">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="infoModalContent" class="text-[13px] text-slate-600 leading-relaxed whitespace-pre-line space-y-2 border-t border-slate-100 pt-4">
+                <!-- Content 注入點 -->
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button id="closeInfoModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-bold transition outline-none">了解</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // UI 說明字典與圖示注入邏輯
+        // ==========================================
+        const infoData = {
+            autoBg: {
+                title: "智慧邊緣去白底",
+                content: "開啟時，系統會自動尋找圖片邊緣的**「白色與相近底色」**並將其透明化。\n\n⚠️ **重要提醒**：若你的原圖本身就是已去背的透明圖、或是帶有半透明煙霧、光暈等特效，請**取消勾選**此功能，以免系統誤將你的漸層特效當成白底刪除了。"
+            },
+            bgThreshold: {
+                title: "去背嚴格度",
+                content: "用來判定「多接近白色才算背景」的數值。\n\n🔸 當遇到**淺灰色的假透明棋盤格**、或是去背去不乾淨時，可將此數值**調低** (例如 180~200)，讓系統消除更多顏色。\n🔸 若發現角色的**白色衣服被誤刪**，請將數值**調高** (例如 245~250) 讓判定變嚴格。"
+            },
+            modes: {
+                title: "產生模式",
+                content: "🔸 **自動偵測**：會依據圖像的輪廓自動抓取每個角色的邊界，適合隨意排列或單一物件的貼圖。\n🔸 **棋盤切割**：無視圖像內容，直接將整個畫布強制切成指定的等分 (幾欄幾列) 或是固定尺寸。適合處理遊戲中排列整齊的精靈圖 (Sprite Sheet)。"
+            },
+            minArea: {
+                title: "過濾最小面積",
+                content: "用來**過濾細小的雜訊與粉塵**。\n只要長寬計算出的面積小於設定值，系統就不會為它產生框。\n\n若發現有很多不要的雜點被選起來，請**調高**；若有微小的配件沒被選到，請**調低**。\n(💡 調整後請點擊下方的「🔧僅過濾整理目前的框」按鈕)"
+            },
+            mergeDist: {
+                title: "合併鄰近框距離",
+                content: "用來**連結角色與其周圍的浮空配件** (例如愛心、汗水)。\n當兩個框的距離小於設定值，就會被強制合併成一個大框。\n\n若角色之間靠太近被合併成同一塊，請將此數值設為 `0` 並重新點擊全圖偵測按鈕。"
+            },
+            fixedSize: {
+                title: "強制統一尺寸",
+                content: "針對遊戲動畫或特定排版需求，若需要輸出的每一張圖都有**一模一樣的像素長寬**，請輸入固定數值後點擊「套用」。\n\n系統會以各個框目前的**中心點**為基準，向外畫出指定大小的完美矩形。"
+            },
+            borderStyle: {
+                title: "外觀樣式",
+                content: "🔸 **透明邊距**：會在圖案與白邊之間加上留白的透明緩衝區。\n🔸 **白邊寬度**：會在圖案的最外圍包上一圈實心的輪廓。這是為了保證貼圖在各種底色 (例如深色模式) 的背景下都不會被吃掉輪廓。"
+            },
+            lineOptimize: {
+                title: "LINE 貼圖優化",
+                content: "LINE 官方強烈規定：所有上傳圖片的長寬像素**必須為雙數(偶數)**。\n\n勾選此項後，系統在導出貼圖時，若發現長寬超出設定的最大限制，會自動以高畫質進行等比例縮小，並強制將最終數值進位成偶數，保證絕不會被 LINE 退件。"
+            },
+            tools: {
+                title: "畫布互動工具",
+                content: "🔸 **🔲 調整框線**：游標為十字，可以拖曳藍色邊框的四個角落來調整大小、拖曳內部移動，或在空白處畫出新框。\n🔸 **🪄 魔術棒去背**：游標為指標，當畫面中有封閉在角色內部沒被去背的顏色時，點擊該區域，系統就會以相近色自動消除它！"
+            }
+        };
+
+        // 注入 SVG 到所有 class="info-icon" 的元素中
+        const infoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-[18px] h-[18px] text-blue-400 hover:text-blue-600 cursor-pointer transition drop-shadow-sm"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" /></svg>`;
+        document.querySelectorAll('.info-icon').forEach(el => {
+            el.innerHTML = infoSvg;
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showInfoModal(el.getAttribute('data-info'));
+            });
+        });
+
+        // 控制 Modal 開關
+        const modalEl = document.getElementById('infoModal');
+        const modalBox = document.getElementById('infoModalBox');
+        
+        function showInfoModal(key) {
+            const data = infoData[key];
+            if(!data) return;
+            document.getElementById('infoModalTitle').innerHTML = `<svg class="w-6 h-6 text-blue-500 drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${data.title}`;
+            // 處理 Markdown-like 加粗顯示
+            let contentHtml = data.content.replace(/\*\*(.*?)\*\*/g, '<span class="font-bold text-slate-800">$1</span>');
+            document.getElementById('infoModalContent').innerHTML = contentHtml;
+            
+            modalEl.classList.remove('hidden');
+            void modalEl.offsetWidth; // 觸發重繪 (Reflow) 以保證動畫生效
+            modalEl.classList.remove('opacity-0');
+            modalBox.classList.remove('scale-95');
+        }
+
+        function closeInfoModal() {
+            modalEl.classList.add('opacity-0');
+            modalBox.classList.add('scale-95');
+            setTimeout(() => { modalEl.classList.add('hidden'); }, 300);
+        }
+
+        document.getElementById('closeInfoModalTop').addEventListener('click', closeInfoModal);
+        document.getElementById('closeInfoModalBtn').addEventListener('click', closeInfoModal);
+        modalEl.addEventListener('click', (e) => { if(e.target === modalEl) closeInfoModal(); });
+
+
+        // ==========================================
+        // 核心狀態管理
+        // ==========================================
+        const state = {
+            img: new Image(),
+            processedCanvas: null,
+            boxes: [],
+            selectedIndex: null,
+            scale: 1,
+            toolMode: 'box', 
+            
+            drag: {
+                active: false, action: null, startX: 0, startY: 0, origBox: null
+            },
+
+            params: {
+                enableAutoBg: true,
+                bgThreshold: 240,
+                minArea: 3000,
+                mergeDist: 24,
+                padding: 20,
+                borderW: 8,
+                borderC: '#FFFFFF',
+                lineOptimize: true,
+                lineMaxW: 370,
+                lineMaxH: 320
+            }
+        };
+
+        // DOM 元素
+        const els = {
+            upload: document.getElementById('uploadInput'),
+            canvas: document.getElementById('mainCanvas'),
+            ctx: document.getElementById('mainCanvas').getContext('2d'),
+            
+            enableAutoBg: document.getElementById('enableAutoBg'),
+            bgThresholdContainer: document.getElementById('bgThresholdContainer'),
+            lineOptimize: document.getElementById('lineOptimize'),
+            lineMaxW: document.getElementById('lineMaxW'),
+            lineMaxH: document.getElementById('lineMaxH'),
+            lineMaxSettings: document.getElementById('lineMaxSettings'),
+            
+            modeAutoBtn: document.getElementById('modeAutoBtn'),
+            modeGridBtn: document.getElementById('modeGridBtn'),
+            autoSettings: document.getElementById('autoSettings'),
+            gridSettings: document.getElementById('gridSettings'),
+            gridType: document.getElementById('gridType'),
+            gridRC: document.getElementById('gridRC'),
+            gridWH: document.getElementById('gridWH'),
+            gridRows: document.getElementById('gridRows'),
+            gridCols: document.getElementById('gridCols'),
+            gridW: document.getElementById('gridW'),
+            gridH: document.getElementById('gridH'),
+            
+            resetDetectBtn: document.getElementById('resetDetectBtn'),
+            applyGridBtn: document.getElementById('applyGridBtn'),
+            applyFilterMergeBtn: document.getElementById('applyFilterMergeBtn'),
+            applyFixedSizeBtn: document.getElementById('applyFixedSizeBtn'),
+            getLargestSizeBtn: document.getElementById('getLargestSizeBtn'),
+            fixedW: document.getElementById('fixedW'),
+            fixedH: document.getElementById('fixedH'),
+            
+            exportSelectedBtn: document.getElementById('exportSelectedBtn'),
+            exportAllBtn: document.getElementById('exportAllBtn'),
+            exportAllCount: document.getElementById('exportAllCount'),
+            statusMsg: document.getElementById('statusMsg'),
+            gallery: document.getElementById('gallery'),
+            toolBoxBtn: document.getElementById('toolBoxBtn'),
+            toolWandBtn: document.getElementById('toolWandBtn'),
+            canvasHint: document.getElementById('canvasHint')
+        };
+
+        // ==========================================
+        // 初始化與事件綁定
+        // ==========================================
+        function init() {
+            els.enableAutoBg.addEventListener('change', (e) => {
+                state.params.enableAutoBg = e.target.checked;
+                els.bgThresholdContainer.style.opacity = e.target.checked ? "1" : "0.4";
+                els.bgThresholdContainer.style.pointerEvents = e.target.checked ? "auto" : "none";
+                if(state.img.src) runDetectionFromScratch();
+            });
+
+            els.lineOptimize.addEventListener('change', (e) => {
+                state.params.lineOptimize = e.target.checked;
+                els.lineMaxSettings.style.opacity = e.target.checked ? "1" : "0.4";
+                els.lineMaxSettings.style.pointerEvents = e.target.checked ? "auto" : "none";
+                renderMainCanvas(); // 重新渲染以更新畫布上的解析度數字
+            });
+
+            const updateLineBounds = () => {
+                state.params.lineMaxW = parseInt(els.lineMaxW.value) || 370;
+                state.params.lineMaxH = parseInt(els.lineMaxH.value) || 320;
+                renderMainCanvas(); // 重新渲染以更新畫布上的解析度數字
+            };
+            els.lineMaxW.addEventListener('input', updateLineBounds);
+            els.lineMaxH.addEventListener('input', updateLineBounds);
+
+            const bindSlider = (id, paramKey) => {
+                const el = document.getElementById(id);
+                const valEl = document.getElementById(id + 'Val');
+                el.addEventListener('input', (e) => {
+                    const val = parseInt(e.target.value);
+                    valEl.textContent = val;
+                    state.params[paramKey] = val;
+                    // 當調整 padding 或邊框時，即時更新預覽解析度數字
+                    if(paramKey === 'padding' || paramKey === 'borderW') {
+                        renderMainCanvas();
+                    }
+                });
+                if(paramKey === 'bgThreshold') {
+                    el.addEventListener('change', () => { if(state.img.src && state.params.enableAutoBg) runDetectionFromScratch(); });
+                }
+            };
+            bindSlider('bgThreshold', 'bgThreshold');
+            bindSlider('minArea', 'minArea');
+            bindSlider('mergeDist', 'mergeDist');
+            bindSlider('padding', 'padding');
+            bindSlider('borderW', 'borderW');
+
+            document.getElementById('borderC').addEventListener('input', (e) => {
+                state.params.borderC = e.target.value;
+                document.getElementById('borderCHex').textContent = e.target.value.toUpperCase();
+            });
+
+            els.modeAutoBtn.onclick = () => {
+                els.modeAutoBtn.className = "flex-1 text-xs py-1.5 rounded bg-white text-blue-700 font-bold shadow-sm transition";
+                els.modeGridBtn.className = "flex-1 text-xs py-1.5 rounded text-slate-500 hover:text-slate-700 font-bold transition";
+                els.autoSettings.classList.remove('hidden');
+                els.gridSettings.classList.add('hidden');
+                els.gridSettings.classList.remove('flex');
+            };
+            els.modeGridBtn.onclick = () => {
+                els.modeGridBtn.className = "flex-1 text-xs py-1.5 rounded bg-white text-blue-700 font-bold shadow-sm transition";
+                els.modeAutoBtn.className = "flex-1 text-xs py-1.5 rounded text-slate-500 hover:text-slate-700 font-bold transition";
+                els.autoSettings.classList.add('hidden');
+                els.gridSettings.classList.remove('hidden');
+                els.gridSettings.classList.add('flex');
+            };
+
+            els.gridType.addEventListener('change', (e) => {
+                if(e.target.value === 'rc') {
+                    els.gridRC.classList.remove('hidden');
+                    els.gridWH.classList.add('hidden');
+                    els.gridWH.classList.remove('flex');
+                } else {
+                    els.gridRC.classList.add('hidden');
+                    els.gridWH.classList.remove('hidden');
+                    els.gridWH.classList.add('flex');
+                }
+            });
+
+            els.toolBoxBtn.onclick = () => setToolMode('box');
+            els.toolWandBtn.onclick = () => setToolMode('wand');
+
+            els.upload.addEventListener('change', handleUpload);
+            
+            els.resetDetectBtn.onclick = runDetectionFromScratch;
+            els.applyGridBtn.onclick = applyGridSplit;
+            els.applyFilterMergeBtn.onclick = applyFiltersToCurrentBoxes;
+            
+            els.applyFixedSizeBtn.onclick = applyFixedSizeToBoxes;
+            els.getLargestSizeBtn.onclick = getLargestBoxSize;
+            
+            // 綁定導出按鈕
+            els.exportSelectedBtn.onclick = () => exportStickers('single');
+            els.exportAllBtn.onclick = () => exportStickers('all');
+
+            els.canvas.addEventListener('mousedown', handleMouseDown);
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
+        }
+
+        function setToolMode(mode) {
+            state.toolMode = mode;
+            if (mode === 'box') {
+                els.toolBoxBtn.className = "px-3 py-1 text-sm font-bold bg-white text-blue-600 rounded shadow-sm transition";
+                els.toolWandBtn.className = "px-3 py-1 text-sm font-bold text-slate-500 hover:text-slate-700 transition";
+                els.canvas.style.cursor = "crosshair";
+                els.canvasHint.textContent = "可拖曳邊角調整框線，或點擊空白處新增框";
+            } else {
+                els.toolWandBtn.className = "px-3 py-1 text-sm font-bold bg-white text-blue-600 rounded shadow-sm transition";
+                els.toolBoxBtn.className = "px-3 py-1 text-sm font-bold text-slate-500 hover:text-slate-700 transition";
+                els.canvas.style.cursor = "pointer";
+                els.canvasHint.textContent = "👆 請點擊畫布上沒去掉的背景，系統會將其消除";
+            }
+        }
+
+        function setStatus(msg, loading = false) {
+            els.statusMsg.textContent = msg;
+            if(loading) els.statusMsg.innerHTML = `<span class="animate-pulse">⏳ ${msg}</span>`;
+        }
+
+        // ==========================================
+        // 核心影像處理演算法
+        // ==========================================
+
+        function processBackground(img) {
+            const canvas = document.createElement('canvas');
+            const w = img.width, h = img.height;
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(img, 0, 0);
+            
+            if (!state.params.enableAutoBg) return canvas;
+
+            const imgData = ctx.getImageData(0, 0, w, h);
+            const data = imgData.data;
+            const visited = new Uint8Array(w * h);
+            const qX = new Int32Array(w * h), qY = new Int32Array(w * h);
+            let head = 0, tail = 0;
+
+            for(let x = 0; x < w; x++) {
+                qX[tail] = x; qY[tail] = 0; tail++; visited[x] = 1;
+                qX[tail] = x; qY[tail] = h - 1; tail++; visited[(h - 1) * w + x] = 1;
+            }
+            for(let y = 0; y < h; y++) {
+                if(!visited[y * w]) { qX[tail] = 0; qY[tail] = y; tail++; visited[y * w] = 1; }
+                if(!visited[y * w + w - 1]) { qX[tail] = w - 1; qY[tail] = y; tail++; visited[y * w + w - 1] = 1; }
+            }
+
+            const threshold = state.params.bgThreshold; 
+            
+            while(head < tail) {
+                const x = qX[head]; const y = qY[head]; head++;
+                const idx = y * w + x; const p = idx * 4;
+
+                if(data[p] >= threshold && data[p+1] >= threshold && data[p+2] >= threshold && data[p+3] > 0) {
+                    data[p+3] = 0; 
+                    for (let dy = -1; dy <= 1; dy++) {
+                        for (let dx = -1; dx <= 1; dx++) {
+                            if (dx === 0 && dy === 0) continue;
+                            const nx = x + dx, ny = y + dy;
+                            if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+                                const nidx = ny * w + nx;
+                                if (!visited[nidx]) {
+                                    visited[nidx] = 1;
+                                    qX[tail] = nx; qY[tail] = ny; tail++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            ctx.putImageData(imgData, 0, 0);
+            return canvas;
+        }
+
+        function wandFill(startX, startY, tolerance = 40) {
+            const ctx = state.processedCanvas.getContext('2d', { willReadFrequently: true });
+            const w = state.processedCanvas.width, h = state.processedCanvas.height;
+            const imgData = ctx.getImageData(0, 0, w, h);
+            const data = imgData.data;
+
+            startX = Math.floor(startX); startY = Math.floor(startY);
+            if (startX < 0 || startX >= w || startY < 0 || startY >= h) return false;
+
+            const startIdx = (startY * w + startX) * 4;
+            const targetR = data[startIdx], targetG = data[startIdx+1], targetB = data[startIdx+2], targetA = data[startIdx+3];
+            if (targetA === 0) return false; 
+
+            const visited = new Uint8Array(w * h);
+            const qX = new Int32Array(w * h), qY = new Int32Array(w * h);
+            let head = 0, tail = 0;
+            qX[tail] = startX; qY[tail] = startY; tail++;
+            visited[startY * w + startX] = 1;
+            let pixelsCleared = 0;
+
+            while(head < tail) {
+                const x = qX[head], y = qY[head]; head++;
+                const idx = y * w + x, p = idx * 4;
+                const r = data[p], g = data[p+1], b = data[p+2], a = data[p+3];
+                
+                if (a > 0) {
+                    const diff = Math.max(Math.abs(r - targetR), Math.abs(g - targetG), Math.abs(b - targetB));
+                    if (diff <= tolerance) {
+                        data[p+3] = 0;
+                        pixelsCleared++;
+                        for (let dy = -1; dy <= 1; dy++) {
+                            for (let dx = -1; dx <= 1; dx++) {
+                                if (dx === 0 && dy === 0) continue;
+                                const nx = x + dx, ny = y + dy;
+                                if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+                                    const nidx = ny * w + nx;
+                                    if (!visited[nidx]) {
+                                        visited[nidx] = 1;
+                                        qX[tail] = nx; qY[tail] = ny; tail++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (pixelsCleared > 0) {
+                ctx.putImageData(imgData, 0, 0);
+                return true;
+            }
+            return false;
+        }
+
+        function findRawRegions(canvas) {
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const w = canvas.width, h = canvas.height;
+            const data = ctx.getImageData(0, 0, w, h).data;
+            const visited = new Uint8Array(w * h);
+            const blobs = [];
+            const qX = new Int32Array(w * h), qY = new Int32Array(w * h);
+
+            for(let y = 0; y < h; y++) {
+                for(let x = 0; x < w; x++) {
+                    const startIdx = y * w + x;
+                    if(visited[startIdx] || data[startIdx * 4 + 3] < 20) continue;
+
+                    let minX = x, maxX = x, minY = y, maxY = y;
+                    let area = 0;
+                    let head = 0, tail = 0;
+                    
+                    qX[tail] = x; qY[tail] = y; tail++;
+                    visited[startIdx] = 1;
+
+                    while(head < tail) {
+                        const cx = qX[head], cy = qY[head]; head++;
+                        area++;
+                        if(cx < minX) minX = cx; if(cx > maxX) maxX = cx;
+                        if(cy < minY) minY = cy; if(cy > maxY) maxY = cy;
+
+                        const neighbors = [[cx-1, cy], [cx+1, cy], [cx, cy-1], [cx, cy+1]];
+                        for(let i=0; i<4; i++) {
+                            const nx = neighbors[i][0], ny = neighbors[i][1];
+                            if(nx >= 0 && nx < w && ny >= 0 && ny < h) {
+                                const nidx = ny * w + nx;
+                                if(!visited[nidx] && data[nidx * 4 + 3] >= 20) {
+                                    visited[nidx] = 1;
+                                    qX[tail] = nx; qY[tail] = ny; tail++;
+                                }
+                            }
+                        }
+                    }
+                    blobs.push({ left: minX, top: minY, right: maxX, bottom: maxY, area: (maxX-minX)*(maxY-minY) });
+                }
+            }
+            return blobs;
+        }
+
+        // ==========================================
+        // 操作與業務邏輯
+        // ==========================================
+
+        function handleUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            setStatus("載入圖片中...", true);
+            const reader = new FileReader();
+            reader.onload = (event) => { state.img.src = event.target.result; };
+            state.img.onload = () => { setTimeout(runDetectionFromScratch, 50); };
+            reader.readAsDataURL(file);
+        }
+
+        function toggleActionButtons(enabled) {
+            [els.resetDetectBtn, els.applyGridBtn, els.applyFilterMergeBtn, els.applyFixedSizeBtn, els.getLargestSizeBtn].forEach(btn => {
+                btn.disabled = !enabled;
+            });
+            if (state.boxes.length === 0) {
+                els.exportAllBtn.disabled = true;
+                els.exportSelectedBtn.disabled = true;
+            } else {
+                els.exportAllBtn.disabled = !enabled;
+                els.exportSelectedBtn.disabled = (!enabled || state.selectedIndex === null);
+            }
+        }
+
+        function runDetectionFromScratch() {
+            if(!state.img.src) return;
+            setStatus("正在重置畫布與分析區塊...", true);
+            toggleActionButtons(false);
+            
+            setTimeout(() => {
+                const t0 = performance.now();
+                state.processedCanvas = processBackground(state.img);
+                state.boxes = findRawRegions(state.processedCanvas);
+                _internalFilterAndMerge();
+                
+                const t1 = performance.now();
+                setStatus(`重置完成！找到 ${state.boxes.length} 個區塊。(耗時 ${Math.round(t1-t0)}ms)`);
+                toggleActionButtons(true);
+            }, 50);
+        }
+
+        function applyGridSplit() {
+            if(!state.processedCanvas) return;
+            const w = state.processedCanvas.width, h = state.processedCanvas.height;
+            state.boxes = [];
+            
+            if (els.gridType.value === 'rc') {
+                const rows = Math.max(1, parseInt(els.gridRows.value) || 1);
+                const cols = Math.max(1, parseInt(els.gridCols.value) || 1);
+                const cellW = w / cols, cellH = h / rows;
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        state.boxes.push({ left: c*cellW, top: r*cellH, right: (c+1)*cellW, bottom: (r+1)*cellH, area: cellW*cellH });
+                    }
+                }
+            } else {
+                const cellW = Math.max(1, parseInt(els.gridW.value) || 64);
+                const cellH = Math.max(1, parseInt(els.gridH.value) || 64);
+                const cols = Math.floor(w / cellW);
+                const rows = Math.floor(h / cellH);
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        state.boxes.push({ left: c*cellW, top: r*cellH, right: (c+1)*cellW, bottom: (r+1)*cellH, area: cellW*cellH });
+                    }
+                }
+            }
+            
+            state.selectedIndex = null;
+            renderMainCanvas();
+            toggleActionButtons(true);
+            setStatus(`已產生棋盤網格！`);
+        }
+
+        function applyFiltersToCurrentBoxes() {
+            if(!state.boxes.length) return;
+            _internalFilterAndMerge();
+            setStatus(`已整理目前的框！目前剩下 ${state.boxes.length} 個區塊。`);
+            toggleActionButtons(true);
+        }
+
+        function _internalFilterAndMerge() {
+            const minArea = state.params.minArea;
+            const mergeDist = state.params.mergeDist;
+
+            let filtered = state.boxes.filter(b => {
+                const area = (b.right - b.left) * (b.bottom - b.top);
+                return area >= minArea;
+            });
+            filtered.sort((a,b) => ((b.right-b.left)*(b.bottom-b.top)) - ((a.right-a.left)*(a.bottom-a.top)));
+
+            let merged = [];
+            for(let box of filtered) {
+                let targetIdx = -1;
+                if(mergeDist > 0) {
+                    for(let i = 0; i < merged.length; i++) {
+                        let m = merged[i];
+                        let hGap = Math.max(0, Math.max(box.left, m.left) - Math.min(box.right, m.right));
+                        let vGap = Math.max(0, Math.max(box.top, m.top) - Math.min(box.bottom, m.bottom));
+                        if(Math.max(hGap, vGap) <= mergeDist) { targetIdx = i; break; }
+                    }
+                }
+                if(targetIdx !== -1) {
+                    let m = merged[targetIdx];
+                    m.left = Math.min(m.left, box.left);
+                    m.top = Math.min(m.top, box.top);
+                    m.right = Math.max(m.right, box.right);
+                    m.bottom = Math.max(m.bottom, box.bottom);
+                } else {
+                    merged.push({...box});
+                }
+            }
+            state.boxes = merged;
+            state.selectedIndex = null;
+            renderMainCanvas();
+        }
+
+        function applyFixedSizeToBoxes() {
+            if(!state.boxes.length) return;
+            const fw = parseInt(els.fixedW.value);
+            const fh = parseInt(els.fixedH.value);
+            if (!fw || !fh || fw <= 0 || fh <= 0) {
+                alert('請輸入有效的寬度與高度數值。');
+                return;
+            }
+
+            state.boxes = state.boxes.map(b => {
+                const cx = (b.left + b.right) / 2;
+                const cy = (b.top + b.bottom) / 2;
+                return {
+                    left: cx - fw / 2,
+                    top: cy - fh / 2,
+                    right: cx + fw / 2,
+                    bottom: cy + fh / 2,
+                    area: fw * fh
+                };
+            });
+            renderMainCanvas();
+            setStatus(`已將所有框強制設為 ${fw} x ${fh}，並置中對齊。`);
+        }
+
+        function getLargestBoxSize() {
+            if(!state.boxes.length) return;
+            let maxW = 0, maxH = 0;
+            state.boxes.forEach(b => {
+                const w = b.right - b.left;
+                const h = b.bottom - b.top;
+                if (w > maxW) maxW = w;
+                if (h > maxH) maxH = h;
+            });
+            els.fixedW.value = Math.ceil(maxW);
+            els.fixedH.value = Math.ceil(maxH);
+            setStatus(`已取得最大框尺寸：${Math.ceil(maxW)} x ${Math.ceil(maxH)}`);
+        }
+
+        // 計算最終貼圖解析度的輔助函數 (支援最大邊界縮放與雙數強制)
+        function calculateFinalDimensions(box) {
+            const cropW = Math.floor(box.right - box.left);
+            const cropH = Math.floor(box.bottom - box.top);
+            const margin = state.params.padding + state.params.borderW;
+            let rawW = cropW + margin * 2;
+            let rawH = cropH + margin * 2;
+            let scale = 1.0;
+
+            if (state.params.lineOptimize) {
+                const maxW = state.params.lineMaxW || 370;
+                const maxH = state.params.lineMaxH || 320;
+                // 若超出最大限制，計算等比例縮放係數
+                if (rawW > maxW || rawH > maxH) {
+                    scale = Math.min(maxW / rawW, maxH / rawH);
+                }
+            }
+
+            let finalW = rawW * scale;
+            let finalH = rawH * scale;
+
+            if (state.params.lineOptimize) {
+                // 強制向下轉換為最接近的雙數 (確保絕對不會超過 LINE 的最高限制)
+                finalW = Math.floor(finalW / 2) * 2;
+                finalH = Math.floor(finalH / 2) * 2;
+            } else {
+                finalW = Math.round(finalW);
+                finalH = Math.round(finalH);
+            }
+            return { w: finalW, h: finalH };
+        }
+
+        function renderMainCanvas() {
+            if(!state.processedCanvas) return;
+            const w = state.processedCanvas.width, h = state.processedCanvas.height;
+            els.canvas.width = w; els.canvas.height = h;
+            
+            const rect = els.canvas.getBoundingClientRect();
+            state.scale = rect.width / w;
+
+            els.ctx.clearRect(0, 0, w, h);
+            els.ctx.drawImage(state.processedCanvas, 0, 0);
+
+            state.boxes.forEach((box, i) => {
+                const isSel = (i === state.selectedIndex);
+                const bw = box.right - box.left, bh = box.bottom - box.top;
+                
+                els.ctx.strokeStyle = isSel ? '#3b82f6' : 'rgba(239, 68, 68, 0.8)';
+                els.ctx.lineWidth = Math.max(2, 2 / state.scale); 
+                els.ctx.strokeRect(box.left, box.top, bw, bh);
+                
+                els.ctx.fillStyle = isSel ? 'rgba(59, 130, 246, 0.15)' : 'rgba(239, 68, 68, 0.05)';
+                els.ctx.fillRect(box.left, box.top, bw, bh);
+
+                // 計算並繪製預覽解析度資訊
+                const dims = calculateFinalDimensions(box);
+                els.ctx.fillStyle = isSel ? '#3b82f6' : 'rgba(239, 68, 68, 0.9)';
+                const fs = Math.max(12, 14 / state.scale);
+                els.ctx.font = `bold ${fs}px sans-serif`;
+                els.ctx.fillText(`ID: ${i+1} (${dims.w}x${dims.h})`, box.left + 5/state.scale, box.top + fs + 5/state.scale);
+
+                if(isSel) {
+                    const hs = Math.max(6, 8 / state.scale);
+                    els.ctx.fillStyle = '#ffffff'; els.ctx.strokeStyle = '#3b82f6';
+                    const drawHandle = (hx, hy) => {
+                        els.ctx.strokeRect(hx - hs/2, hy - hs/2, hs, hs);
+                        els.ctx.fillRect(hx - hs/2, hy - hs/2, hs, hs);
+                    };
+                    drawHandle(box.left, box.top); drawHandle(box.right, box.top);
+                    drawHandle(box.left, box.bottom); drawHandle(box.right, box.bottom);
+                }
+            });
+
+            const count = state.boxes.length;
+            if(count > 0) {
+                els.exportAllCount.textContent = count;
+                els.exportAllBtn.disabled = false;
+                els.exportSelectedBtn.disabled = state.selectedIndex === null;
+            } else {
+                els.exportAllCount.textContent = '0';
+                els.exportAllBtn.disabled = true;
+                els.exportSelectedBtn.disabled = true;
+            }
+        }
+
+        // ==========================================
+        // 畫布滑鼠事件 (Hit-Test)
+        // ==========================================
+        function getMousePos(e) {
+            const rect = els.canvas.getBoundingClientRect();
+            const scaleX = els.canvas.width / rect.width, scaleY = els.canvas.height / rect.height;
+            return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+        }
+
+        function handleMouseDown(e) {
+            if(!state.processedCanvas) return;
+            const pos = getMousePos(e);
+
+            if (state.toolMode === 'wand') {
+                setStatus("魔術棒去背處理中...", true);
+                setTimeout(() => {
+                    if(wandFill(pos.x, pos.y, 40)) {
+                        setStatus(`已消除點擊區域背景！`);
+                        renderMainCanvas();
+                    } else {
+                        setStatus(`該區域無法消除或已透明。`);
+                    }
+                }, 10);
+                return;
+            }
+
+            const tol = Math.max(8, 12 / state.scale);
+            state.drag.active = true;
+            state.drag.startX = pos.x; state.drag.startY = pos.y;
+            state.drag.action = 'create';
+            let newSelIdx = null;
+
+            if (state.selectedIndex !== null && state.boxes[state.selectedIndex]) {
+                const b = state.boxes[state.selectedIndex];
+                if (Math.abs(pos.x-b.left)<=tol && Math.abs(pos.y-b.top)<=tol) { state.drag.action='resize_nw'; newSelIdx=state.selectedIndex; }
+                else if (Math.abs(pos.x-b.right)<=tol && Math.abs(pos.y-b.top)<=tol) { state.drag.action='resize_ne'; newSelIdx=state.selectedIndex; }
+                else if (Math.abs(pos.x-b.left)<=tol && Math.abs(pos.y-b.bottom)<=tol) { state.drag.action='resize_sw'; newSelIdx=state.selectedIndex; }
+                else if (Math.abs(pos.x-b.right)<=tol && Math.abs(pos.y-b.bottom)<=tol) { state.drag.action='resize_se'; newSelIdx=state.selectedIndex; }
+            }
+
+            if (newSelIdx === null) {
+                const sorted = state.boxes.map((box, idx) => ({ idx, area: (box.right-box.left)*(box.bottom-box.top), box }))
+                                          .sort((a, b) => a.area - b.area);
+                for (let item of sorted) {
+                    const b = item.box;
+                    if (Math.abs(pos.x-b.left)<=tol && Math.abs(pos.y-b.top)<=tol) { state.drag.action='resize_nw'; newSelIdx=item.idx; break; }
+                    if (Math.abs(pos.x-b.right)<=tol && Math.abs(pos.y-b.top)<=tol) { state.drag.action='resize_ne'; newSelIdx=item.idx; break; }
+                    if (Math.abs(pos.x-b.left)<=tol && Math.abs(pos.y-b.bottom)<=tol) { state.drag.action='resize_sw'; newSelIdx=item.idx; break; }
+                    if (Math.abs(pos.x-b.right)<=tol && Math.abs(pos.y-b.bottom)<=tol) { state.drag.action='resize_se'; newSelIdx=item.idx; break; }
+                }
+                if (newSelIdx === null) {
+                    for (let item of sorted) {
+                        const b = item.box;
+                        if(pos.x >= b.left && pos.x <= b.right && pos.y >= b.top && pos.y <= b.bottom) {
+                            state.drag.action = 'move'; newSelIdx = item.idx; break;
+                        }
+                    }
+                }
+            }
+
+            if(newSelIdx !== null) {
+                state.selectedIndex = newSelIdx;
+                state.drag.origBox = { ...state.boxes[state.selectedIndex] };
+            } else {
+                state.boxes.push({left: pos.x, top: pos.y, right: pos.x, bottom: pos.y});
+                state.selectedIndex = state.boxes.length - 1;
+            }
+            renderMainCanvas();
+        }
+
+        function handleMouseMove(e) {
+            if(!state.drag.active || state.selectedIndex === null || state.toolMode !== 'box') return;
+            const pos = getMousePos(e);
+            const dx = pos.x - state.drag.startX, dy = pos.y - state.drag.startY;
+            let b = state.boxes[state.selectedIndex];
+            const orig = state.drag.origBox;
+
+            switch(state.drag.action) {
+                case 'move': b.left=orig.left+dx; b.right=orig.right+dx; b.top=orig.top+dy; b.bottom=orig.bottom+dy; break;
+                case 'resize_nw': b.left = pos.x; b.top = pos.y; break;
+                case 'resize_ne': b.right = pos.x; b.top = pos.y; break;
+                case 'resize_sw': b.left = pos.x; b.bottom = pos.y; break;
+                case 'resize_se': b.right = pos.x; b.bottom = pos.y; break;
+                case 'create':
+                    b.left = Math.min(state.drag.startX, pos.x); b.right = Math.max(state.drag.startX, pos.x);
+                    b.top = Math.min(state.drag.startY, pos.y); b.bottom = Math.max(state.drag.startY, pos.y);
+                    break;
+            }
+            if(state.drag.action !== 'create' && state.drag.action !== 'move') {
+                if(b.left > b.right) [b.left, b.right] = [b.right, b.left];
+                if(b.top > b.bottom) [b.top, b.bottom] = [b.bottom, b.top];
+            }
+            b.left = Math.max(0, b.left); b.top = Math.max(0, b.top);
+            b.right = Math.min(els.canvas.width, b.right); b.bottom = Math.min(els.canvas.height, b.bottom);
+            renderMainCanvas();
+        }
+
+        function handleMouseUp(e) {
+            if(!state.drag.active) return;
+            state.drag.active = false;
+            if(state.drag.action === 'create' && state.selectedIndex !== null) {
+                const b = state.boxes[state.selectedIndex];
+                if(b.right - b.left < 5 || b.bottom - b.top < 5) {
+                    state.boxes.splice(state.selectedIndex, 1);
+                    state.selectedIndex = null;
+                }
+            }
+            renderMainCanvas();
+        }
+
+        // ==========================================
+        // 導出功能 (生成與 ZIP 打包)
+        // ==========================================
+        async function exportStickers(mode) {
+            if(!state.processedCanvas || state.boxes.length === 0) return;
+            
+            const targetBoxes = (mode === 'single' && state.selectedIndex !== null)
+                                ? [state.boxes[state.selectedIndex]]
+                                : state.boxes;
+            
+            setStatus(`正在生成 ${targetBoxes.length} 張貼圖...`, true);
+            toggleActionButtons(false);
+            els.gallery.innerHTML = ''; 
+
+            setTimeout(async () => {
+                let html = '';
+                const zip = new JSZip(); // 初始化 JSZip
+
+                targetBoxes.forEach((box, iterationIdx) => {
+                    // 如果是導出單張，維持原本的真實 ID
+                    const realIdx = (mode === 'single' && state.selectedIndex !== null) ? state.selectedIndex : iterationIdx;
+                    
+                    const pad = state.params.padding, borderW = state.params.borderW, colorHex = state.params.borderC;
+                    const cropW = Math.floor(box.right - box.left), cropH = Math.floor(box.bottom - box.top);
+                    const margin = pad + borderW;
+                    
+                    const rawW = cropW + margin * 2;
+                    const rawH = cropH + margin * 2;
+                    
+                    // 根據 LINE 貼圖邏輯調整最終解析度
+                    const dims = calculateFinalDimensions(box);
+                    const finalW = dims.w;
+                    const finalH = dims.h;
+
+                    const outCanvas = document.createElement('canvas');
+                    outCanvas.width = rawW; outCanvas.height = rawH;
+                    const ctx = outCanvas.getContext('2d', { willReadFrequently: true });
+
+                    const imgTemp = document.createElement('canvas');
+                    imgTemp.width = cropW; imgTemp.height = cropH;
+                    const ctxTemp = imgTemp.getContext('2d');
+                    ctxTemp.drawImage(state.processedCanvas, box.left, box.top, cropW, cropH, 0, 0, cropW, cropH);
+
+                    // 計算置中 Offset，確保在強制雙數進位時不會變形
+                    const offX = margin + Math.floor((rawW - (cropW + margin * 2)) / 2);
+                    const offY = margin + Math.floor((rawH - (cropH + margin * 2)) / 2);
+
+                    if (borderW > 0) {
+                        const silCanvas = document.createElement('canvas');
+                        silCanvas.width = cropW; silCanvas.height = cropH;
+                        const silCtx = silCanvas.getContext('2d');
+                        silCtx.drawImage(imgTemp, 0, 0);
+                        
+                        const r = parseInt(colorHex.slice(1,3), 16), g = parseInt(colorHex.slice(3,5), 16), b = parseInt(colorHex.slice(5,7), 16);
+                        const silData = silCtx.getImageData(0, 0, cropW, cropH);
+                        const data = silData.data;
+                        for(let i=0; i<data.length; i+=4) {
+                            if(data[i+3] > 10) { data[i]=r; data[i+1]=g; data[i+2]=b; data[i+3]=255; }
+                            else { data[i+3] = 0; }
+                        }
+                        silCtx.putImageData(silData, 0, 0);
+
+                        for (let radius = 1; radius <= borderW; radius += 2) {
+                            const steps = Math.max(8, Math.ceil(radius * Math.PI));
+                            for(let i=0; i<steps; i++) {
+                                const angle = (i / steps) * Math.PI * 2;
+                                ctx.drawImage(silCanvas, offX + Math.cos(angle)*radius, offY + Math.sin(angle)*radius);
+                            }
+                        }
+                        ctx.drawImage(silCanvas, offX, offY);
+                    }
+                    ctx.drawImage(imgTemp, offX, offY);
+                    
+                    // 檢查是否需要執行解析度縮放 (因應 LINE 限制)
+                    let finalCanvas = outCanvas;
+                    if (rawW !== finalW || rawH !== finalH) {
+                        finalCanvas = document.createElement('canvas');
+                        finalCanvas.width = finalW; finalCanvas.height = finalH;
+                        const fCtx = finalCanvas.getContext('2d');
+                        // 開啟影像平滑處理以獲得高品質的縮放效果
+                        fCtx.imageSmoothingEnabled = true;
+                        fCtx.imageSmoothingQuality = 'high';
+                        fCtx.drawImage(outCanvas, 0, 0, rawW, rawH, 0, 0, finalW, finalH);
+                    }
+                    
+                    const dataUrl = finalCanvas.toDataURL('image/png');
+                    const fileName = `sticker_${realIdx+1}.png`;
+
+                    // 將檔案加進 ZIP
+                    const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
+                    zip.file(fileName, base64Data, {base64: true});
+                    
+                    html += `
+                        <div class="flex flex-col items-center gap-2 shrink-0 bg-slate-50 p-3 rounded-lg border border-slate-200 shadow-sm hover:shadow-md transition">
+                            <div class="w-28 h-28 checkerboard rounded flex items-center justify-center p-1 relative">
+                                <span class="absolute top-1 left-1 bg-black/50 text-white text-[10px] px-1 rounded">${finalW}x${finalH}</span>
+                                <img src="${dataUrl}" class="max-w-full max-h-full object-contain drop-shadow-sm">
+                            </div>
+                            <a href="${dataUrl}" download="${fileName}" class="text-xs text-blue-600 font-bold bg-blue-50 px-3 py-1 rounded w-full text-center border border-blue-100 transition">📥 下載 (${fileName})</a>
+                        </div>
+                    `;
+                });
+
+                els.gallery.innerHTML = html;
+                setStatus(`✅ 成功生成 ${targetBoxes.length} 張貼圖！`);
+                toggleActionButtons(true);
+                
+                // 處理打包下載邏輯
+                if (mode === 'all') {
+                    setStatus(`正在壓縮 ZIP 檔案...`, true);
+                    zip.generateAsync({type:"blob"}).then(function(content) {
+                        const url = URL.createObjectURL(content);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = "LINE_Stickers.zip";
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        setStatus(`✅ 成功打包並下載 ${targetBoxes.length} 張貼圖！`);
+                    });
+                }
+            }, 50);
+        }
+
+        init();
+    </script>
+</body>
+</html>
