@@ -11,6 +11,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="貼圖切割">
     <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgZmlsbD0iIzI1NjNlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTIlIiBkeT0iLjM1ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMzAwIiBmaWxsPSJ3aGl0ZSI+4pyCPC90ZXh0Pjwvc3ZnPg==">
+    <link id="manifest-link" rel="manifest" href="">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 JSZip 用於打包全部貼圖 -->
@@ -33,18 +34,23 @@
         ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
     </style>
 </head>
-<!-- 手機板採用垂直排列，電腦板(md以上)採用水平排列與隱藏全域滾動 -->
 <body class="bg-slate-100 flex flex-col md:flex-row md:h-screen font-sans text-slate-800 overflow-x-hidden md:overflow-hidden">
 
     <!-- 左側控制面板 -->
     <div class="w-full md:w-80 bg-white shadow-xl z-10 flex flex-col shrink-0 md:h-full md:overflow-y-auto border-b md:border-r border-slate-200 relative">
-        <div class="p-4 md:p-5 border-b border-slate-100 bg-slate-50">
-            <h1 class="text-lg md:text-xl font-bold text-slate-800 flex items-center gap-2">✂️ 貼圖切割工具</h1>
-            <p class="text-[11px] md:text-xs text-slate-500 mt-1">手機、電腦皆可離線使用</p>
+        <div class="p-4 md:p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+            <div>
+                <h1 class="text-lg md:text-xl font-bold text-slate-800 flex items-center gap-2">✂️ 貼圖切割工具</h1>
+                <p class="text-[11px] md:text-xs text-slate-500 mt-1">完全離線，安全無隱私風險</p>
+            </div>
+            <!-- PWA 安裝按鈕 -->
+            <button id="installAppBtn" class="hidden px-3 py-1.5 text-xs font-bold bg-green-500 hover:bg-green-600 text-white rounded shadow-sm transition flex items-center gap-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                安裝 App
+            </button>
         </div>
 
         <div class="p-4 md:p-5 flex flex-col gap-4 flex-1">
-            
             <!-- 1. 檔案與底圖處理 -->
             <div class="flex flex-col gap-2">
                 <h2 class="font-bold text-sm text-slate-700">1. 檔案與底圖處理</h2>
@@ -207,6 +213,13 @@
             <button id="exportAllBtn" disabled class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded shadow transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed text-sm">
                 打包導出全部 (<span id="exportAllCount">0</span>) ZIP
             </button>
+            
+            <!-- 終極離線下載按鈕 -->
+            <button id="downloadOfflineBtn" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-4 rounded shadow transition-colors text-xs mt-1 flex justify-center items-center gap-1" onclick="downloadOfflineHTML()">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                下載「完全離線單檔版」
+            </button>
+            
             <p id="statusMsg" class="text-xs text-center text-slate-500 mt-1 font-medium">請先選擇圖片</p>
         </div>
     </div>
@@ -221,16 +234,10 @@
                     <i class="info-icon" data-info="tools"></i>
                     <span id="canvasHint" class="text-[10px] md:text-xs font-normal text-slate-500 bg-slate-200 px-2 py-1 rounded hidden md:inline">可拖曳邊角調整框線，或點擊空白處新增框</span>
                 </h3>
-                <!-- 工具列與安裝按鈕 -->
-                <div class="flex items-center gap-2 self-start md:self-auto">
-                    <button id="installAppBtn" class="hidden px-3 py-1 text-xs md:text-sm font-bold bg-green-500 hover:bg-green-600 text-white rounded shadow-sm transition flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        安裝 App
-                    </button>
-                    <div class="flex bg-slate-200 p-1 rounded-lg">
-                        <button id="toolBoxBtn" class="px-2 py-1 text-xs md:text-sm font-bold bg-white text-blue-600 rounded shadow-sm transition">🔲 調整框線</button>
-                        <button id="toolWandBtn" class="px-2 py-1 text-xs md:text-sm font-bold text-slate-500 hover:text-slate-700 transition">🪄 魔術棒去背</button>
-                    </div>
+                <!-- 工具列 -->
+                <div class="flex bg-slate-200 p-1 rounded-lg self-start md:self-auto">
+                    <button id="toolBoxBtn" class="px-2 py-1 text-xs md:text-sm font-bold bg-white text-blue-600 rounded shadow-sm transition">🔲 調整框線</button>
+                    <button id="toolWandBtn" class="px-2 py-1 text-xs md:text-sm font-bold text-slate-500 hover:text-slate-700 transition">🪄 魔術棒去背</button>
                 </div>
             </div>
             
@@ -254,9 +261,7 @@
     <div id="infoModal" class="fixed inset-0 z-50 bg-slate-900/50 hidden flex items-center justify-center backdrop-blur-sm opacity-0 transition-opacity duration-300">
         <div class="bg-white rounded-xl shadow-2xl p-5 md:p-6 max-w-sm w-[90%] mx-4 transform transition-all scale-95" id="infoModalBox">
             <div class="flex justify-between items-center mb-4">
-                <h3 id="infoModalTitle" class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                    功能說明
-                </h3>
+                <h3 id="infoModalTitle" class="text-lg font-bold text-slate-800 flex items-center gap-2">功能說明</h3>
                 <button id="closeInfoModalTop" class="text-slate-400 hover:text-slate-600 outline-none p-1">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
@@ -289,7 +294,6 @@
         const infoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-[16px] h-[16px] md:w-[18px] md:h-[18px] text-blue-400 hover:text-blue-600 cursor-pointer transition drop-shadow-sm"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" /></svg>`;
         document.querySelectorAll('.info-icon').forEach(el => {
             el.innerHTML = infoSvg;
-            // 支援點擊與觸控
             el.addEventListener('click', (e) => { e.stopPropagation(); showInfoModal(el.getAttribute('data-info')); });
             el.addEventListener('touchstart', (e) => { e.stopPropagation(); showInfoModal(el.getAttribute('data-info')); }, {passive: true});
         });
@@ -331,22 +335,10 @@
             selectedIndex: null,
             scale: 1,
             toolMode: 'box', 
-            
-            drag: {
-                active: false, action: null, startX: 0, startY: 0, origBox: null
-            },
-
+            drag: { active: false, action: null, startX: 0, startY: 0, origBox: null },
             params: {
-                enableAutoBg: true,
-                bgThreshold: 240,
-                minArea: 3000,
-                mergeDist: 24,
-                padding: 20,
-                borderW: 8,
-                borderC: '#FFFFFF',
-                lineOptimize: true,
-                lineMaxW: 370,
-                lineMaxH: 320
+                enableAutoBg: true, bgThreshold: 240, minArea: 3000, mergeDist: 24,
+                padding: 20, borderW: 8, borderC: '#FFFFFF', lineOptimize: true, lineMaxW: 370, lineMaxH: 320
             }
         };
 
@@ -455,13 +447,9 @@
 
             els.gridType.addEventListener('change', (e) => {
                 if(e.target.value === 'rc') {
-                    els.gridRC.classList.remove('hidden');
-                    els.gridWH.classList.add('hidden');
-                    els.gridWH.classList.remove('flex');
+                    els.gridRC.classList.remove('hidden'); els.gridWH.classList.add('hidden'); els.gridWH.classList.remove('flex');
                 } else {
-                    els.gridRC.classList.add('hidden');
-                    els.gridWH.classList.remove('hidden');
-                    els.gridWH.classList.add('flex');
+                    els.gridRC.classList.add('hidden'); els.gridWH.classList.remove('hidden'); els.gridWH.classList.add('flex');
                 }
             });
 
@@ -484,7 +472,7 @@
             els.canvas.addEventListener('touchstart', handlePointerDown, {passive: false});
             
             window.addEventListener('mousemove', handlePointerMove);
-            els.canvas.addEventListener('touchmove', handlePointerMove, {passive: false}); // 綁在 canvas 才能 preventDefault 防滾動
+            els.canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
             
             window.addEventListener('mouseup', handlePointerUp);
             window.addEventListener('touchend', handlePointerUp);
@@ -1005,6 +993,48 @@
         }
 
         // ==========================================
+        // 終極打包離線版 (純單檔產生器)
+        // ==========================================
+        async function downloadOfflineHTML() {
+            if (location.protocol === 'file:') {
+                alert('您目前已經在使用離線單檔版，無需再次下載！');
+                return;
+            }
+
+            setStatus("正在封裝完全離線版，這會將外部資源寫入檔案，請稍候...", true);
+            try {
+                // 抓取外部 CDN 的原始碼
+                const twRes = await fetch('https://cdn.tailwindcss.com');
+                const twCode = await twRes.text();
+                const jzRes = await fetch('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+                const jzCode = await jzRes.text();
+
+                // 複製當前的 HTML (去除網頁上因為執行產生的動態 style)
+                let html = '<!DOCTYPE html>\n<html lang="zh-TW">\n' + document.documentElement.innerHTML + '\n</html>';
+                html = html.replace(/<style id="tailwind[^>]*>.*?<\/style>/gis, '');
+
+                // 替換 CDN 為內部原始碼
+                html = html.replace(/<script src="https:\/\/cdn\.tailwindcss\.com"><\/script>/gi, '<script>' + twCode + '<\/script>');
+                html = html.replace(/<script src="https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/jszip\/3\.10\.1\/jszip\.min\.js"><\/script>/gi, '<script>' + jzCode + '<\/script>');
+
+                // 下載檔案
+                const blob = new Blob([html], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = '貼圖切割工具_離線版.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                setStatus("✅ 完全離線單檔版下載成功！存放在手機檔案或電腦桌面，點開即用。");
+            } catch(e) {
+                console.error(e);
+                setStatus("❌ 封裝離線版失敗，請確認網路連線是否正常。");
+            }
+        }
+
+        // ==========================================
         // 導出功能 (生成與 ZIP 打包 相容 iOS/Android)
         // ==========================================
         async function exportStickers(mode) {
@@ -1130,14 +1160,15 @@
         // ==========================================
         let deferredPrompt;
         function initPWA() {
-            // 1. 動態建立與注入 Web App Manifest
+            if(location.protocol === 'file:') return; // 本地檔案不需要啟動 PWA 註冊
+
             const manifest = {
                 name: "貼圖切割工具",
                 short_name: "貼圖切割",
                 description: "完全在瀏覽器內離線執行的貼圖切割工具",
                 start_url: location.href,
                 display: "standalone",
-                background_color: "#f1f5f9",
+                background_color: "#f8fafc",
                 theme_color: "#2563eb",
                 icons: [{
                     src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgZmlsbD0iIzI1NjNlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM1ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMzAwIiBmaWxsPSJ3aGl0ZSI+4pyCPC90ZXh0Pjwvc3ZnPg==",
@@ -1146,20 +1177,15 @@
                     purpose: "any maskable"
                 }]
             };
-            const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-            const manifestUrl = URL.createObjectURL(manifestBlob);
-            const link = document.createElement('link');
-            link.rel = 'manifest';
-            link.href = manifestUrl;
-            document.head.appendChild(link);
+            // 替換 Manifest 為 Base64 Data URI，提升 iOS 支援度
+            const manifestUrl = 'data:application/manifest+json;base64,' + btoa(unescape(encodeURIComponent(JSON.stringify(manifest))));
+            document.getElementById('manifest-link').href = manifestUrl;
 
-            // 2. 動態註冊 Service Worker 達成離線與安裝條件
             const swCode = `
                 const CACHE_NAME = 'sticker-pwa-v1';
                 self.addEventListener('install', event => self.skipWaiting());
                 self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
                 self.addEventListener('fetch', event => {
-                    // 單檔架構下不做強烈攔截，僅為符合 PWA 安裝標準
                     event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
                 });
             `;
@@ -1169,7 +1195,6 @@
                 navigator.serviceWorker.register(swUrl).catch(() => {});
             }
 
-            // 3. 處理 Android/Chrome 的安裝提示
             const installBtn = document.getElementById('installAppBtn');
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
