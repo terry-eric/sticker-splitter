@@ -213,6 +213,13 @@
             <button id="exportAllBtn" disabled class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded shadow transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed text-sm">
                 打包導出全部 (<span id="exportAllCount">0</span>) ZIP
             </button>
+
+            <!-- 單機版下載按鈕 -->
+            <button id="downloadOfflineBtn" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-4 rounded shadow transition-colors text-xs mt-1 flex justify-center items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                下載「單機網頁版 (HTML)」
+            </button>
+
             <p id="statusMsg" class="text-xs text-center text-slate-500 mt-1 font-medium">請先選擇圖片</p>
         </div>
     </div>
@@ -275,7 +282,6 @@
         let deferredPrompt;
         window.addEventListener('load', () => {
             if ('serviceWorker' in navigator) {
-                // 註冊放在同一層目錄下的 sw.js
                 navigator.serviceWorker.register('./sw.js').catch(err => {
                     console.log('SW registration failed:', err);
                 });
@@ -401,7 +407,8 @@
             gallery: document.getElementById('gallery'),
             toolBoxBtn: document.getElementById('toolBoxBtn'),
             toolWandBtn: document.getElementById('toolWandBtn'),
-            canvasHint: document.getElementById('canvasHint')
+            canvasHint: document.getElementById('canvasHint'),
+            downloadOfflineBtn: document.getElementById('downloadOfflineBtn')
         };
 
         // ==========================================
@@ -490,6 +497,8 @@
             
             els.exportSelectedBtn.onclick = () => exportStickers('single');
             els.exportAllBtn.onclick = () => exportStickers('all');
+            
+            if(els.downloadOfflineBtn) els.downloadOfflineBtn.onclick = downloadOfflineHTML;
 
             // 支援滑鼠與觸控 (Mobile Touch Events)
             els.canvas.addEventListener('mousedown', handlePointerDown);
@@ -518,6 +527,41 @@
         function setStatus(msg, loading = false) {
             els.statusMsg.textContent = msg;
             if(loading) els.statusMsg.innerHTML = `<span class="animate-pulse">⏳ ${msg}</span>`;
+        }
+
+        // ==========================================
+        // 單機版檔案下載 (不呼叫 fetch 以免被 CORS/CSP 阻擋)
+        // ==========================================
+        async function downloadOfflineHTML() {
+            if (location.protocol === 'file:') {
+                alert('您目前已經在使用單機版，無需再次下載！');
+                return;
+            }
+
+            setStatus("正在產生單機網頁版...", true);
+            try {
+                // 不使用 fetch 抓取外部資源以避免瀏覽器或 Canvas 安全沙盒阻擋。
+                // 直接擷取當前網頁的 HTML 結構，保留 CDN 連結。
+                let html = '<!DOCTYPE html>\n<html lang="zh-TW">\n' + document.documentElement.innerHTML + '\n</html>';
+                
+                // 清理動態產生的樣式，保持原始 CDN 引入即可
+                html = html.replace(/<style id="tailwind[^>]*>.*?<\/style>/gis, '');
+
+                const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = '貼圖切割工具_單機版.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                setStatus("✅ 單機版下載成功！存放在裝置中，點開即可使用。");
+            } catch(e) {
+                console.error(e);
+                alert("下載失敗，這可能是因為您所在的瀏覽器沙盒限制。\n💡 替代方案：\n請直接使用瀏覽器的「儲存網頁」功能 (電腦請按 Ctrl+S，手機請選擇儲存網頁)，並選擇「網頁，單一檔案」即可。");
+                setStatus("❌ 下載失敗，請使用瀏覽器內建的儲存功能。");
+            }
         }
 
         // ==========================================
