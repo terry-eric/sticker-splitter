@@ -1,6 +1,6 @@
 const CACHE_NAME = 'sticker-app-v1';
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(['./', './index.html', './manifest.json'])));
+  e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(['./', './index.html'])));
   self.skipWaiting();
 });
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
