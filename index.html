@@ -993,7 +993,7 @@
         }
 
         // ==========================================
-        // 終極打包離線版 (純單檔產生器)
+        // 終極打包離線版 (純單檔產生器) - 增強版
         // ==========================================
         async function downloadOfflineHTML() {
             if (location.protocol === 'file:') {
@@ -1001,13 +1001,27 @@
                 return;
             }
 
-            setStatus("正在封裝完全離線版，這會將外部資源寫入檔案，請稍候...", true);
+            setStatus("正在封裝完全離線版，請稍候 (這需要一點網路下載時間)...", true);
             try {
-                // 抓取外部 CDN 的原始碼
-                const twRes = await fetch('https://cdn.tailwindcss.com');
-                const twCode = await twRes.text();
-                const jzRes = await fetch('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
-                const jzCode = await jzRes.text();
+                // 增強型抓取：多重備用節點 (解決瀏覽器擋 CORS 問題)
+                const fetchText = async (url) => {
+                    const proxies = [
+                        url, // 1. 直接抓取
+                        'https://api.allorigins.win/raw?url=' + encodeURIComponent(url), // 2. 備用節點 A
+                        'https://corsproxy.io/?' + encodeURIComponent(url) // 3. 備用節點 B
+                    ];
+                    
+                    for (let p of proxies) {
+                        try {
+                            const res = await fetch(p);
+                            if (res.ok) return await res.text();
+                        } catch (e) { console.warn('Fetch failed for:', p); }
+                    }
+                    throw new Error('All fetch attempts failed for ' + url);
+                };
+
+                const twCode = await fetchText('https://cdn.tailwindcss.com');
+                const jzCode = await fetchText('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
 
                 // 複製當前的 HTML (去除網頁上因為執行產生的動態 style)
                 let html = '<!DOCTYPE html>\n<html lang="zh-TW">\n' + document.documentElement.innerHTML + '\n</html>';
@@ -1018,7 +1032,7 @@
                 html = html.replace(/<script src="https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/jszip\/3\.10\.1\/jszip\.min\.js"><\/script>/gi, '<script>' + jzCode + '<\/script>');
 
                 // 下載檔案
-                const blob = new Blob([html], { type: 'text/html' });
+                const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -1030,7 +1044,8 @@
                 setStatus("✅ 完全離線單檔版下載成功！存放在手機檔案或電腦桌面，點開即用。");
             } catch(e) {
                 console.error(e);
-                setStatus("❌ 封裝離線版失敗，請確認網路連線是否正常。");
+                alert("⚠️ 瀏覽器安全機制阻擋了自動下載外部資源！\n\n💡 離線版 100% 成功替代方案：\n請直接使用瀏覽器的「另存網頁」功能！\n(電腦請按 Ctrl+S，手機請在瀏覽器選單選擇「儲存網頁」或「加到桌面」)\n並選擇「網頁，單一檔案」，效果完全一樣！");
+                setStatus("❌ 封裝離線版失敗，請使用瀏覽器內建的儲存功能 (Ctrl+S)。");
             }
         }
 
