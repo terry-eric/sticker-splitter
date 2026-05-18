@@ -25,7 +25,6 @@
             background-size: 24px 24px;
             background-position: 0 0, 12px 12px;
         }
-        canvas { touch-action: none; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
@@ -38,20 +37,20 @@
     <header class="bg-white shadow-sm z-20 shrink-0 flex flex-col">
         <div class="p-3 md:p-4 flex justify-between items-center bg-slate-50 border-b border-slate-200">
             <div>
-                <h1 class="text-base md:text-xl font-bold text-slate-800 flex items-center gap-2">✂️ 貼圖切割工具</h1>
-                <p class="text-[10px] md:text-xs text-slate-500 mt-0.5">本機離線執行，保障隱私</p>
+                <h1 class="text-base md:text-2xl font-bold text-slate-800 flex items-center gap-2">✂️ 貼圖切割工具</h1>
+                <p class="text-[10px] md:text-sm text-slate-500 mt-0.5">本機離線執行，保障隱私</p>
             </div>
             <!-- PWA 安裝按鈕 -->
-            <button id="installAppBtn" class="hidden px-3 py-1.5 text-xs font-bold bg-green-500 hover:bg-green-600 text-white rounded shadow-sm transition flex items-center gap-1">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            <button id="installAppBtn" class="hidden px-3 py-1.5 md:px-5 md:py-2 text-xs md:text-sm font-bold bg-green-500 hover:bg-green-600 text-white rounded shadow-sm transition flex items-center gap-1">
+                <svg class="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                 安裝 App
             </button>
         </div>
         
         <!-- 全域分頁切換按鈕 -->
         <div class="flex">
-            <button id="tabBtnSettings" class="flex-1 py-2.5 md:py-3 text-sm font-bold border-b-[3px] border-blue-600 text-blue-600 transition-colors">⚙️ 設定與匯出</button>
-            <button id="tabBtnCanvas" class="flex-1 py-2.5 md:py-3 text-sm font-bold border-b-[3px] border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors">🎨 預覽與結果</button>
+            <button id="tabBtnSettings" class="flex-1 py-2.5 md:py-4 text-sm md:text-lg font-bold border-b-[3px] border-blue-600 text-blue-600 transition-colors">⚙️ 設定與匯出</button>
+            <button id="tabBtnCanvas" class="flex-1 py-2.5 md:py-4 text-sm md:text-lg font-bold border-b-[3px] border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors">🎨 預覽與結果</button>
         </div>
     </header>
 
@@ -62,70 +61,70 @@
         <!-- 分頁 1: 設定與匯出面板 -->
         <!-- ========================================== -->
         <div id="panelSettings" class="absolute inset-0 z-10 overflow-y-auto pb-20">
-            <div class="max-w-3xl mx-auto w-full p-4 md:p-6 flex flex-col gap-5">
+            <div class="max-w-4xl mx-auto w-full p-4 md:p-6 flex flex-col gap-6 md:gap-8">
                 
                 <!-- 區塊 1 & 2 併排 (電腦版) -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
                     
                     <!-- 1. 檔案與底圖處理 -->
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-3">
-                        <h2 class="font-bold text-sm text-slate-700 border-b border-slate-100 pb-2">1. 檔案與底圖處理</h2>
+                    <div class="bg-white p-5 md:p-7 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-4">
+                        <h2 class="font-bold text-sm md:text-lg text-slate-700 border-b border-slate-100 pb-2">1. 檔案與底圖處理</h2>
                         <input type="file" id="uploadInput" accept="image/png, image/jpeg, image/webp" 
-                            class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                            class="block w-full text-sm md:text-base text-slate-500 file:mr-4 file:py-2.5 file:px-5 file:rounded-md file:border-0 file:text-sm file:md:text-base file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
                         
-                        <label class="flex items-center gap-2 text-xs text-slate-700 mt-1 bg-slate-50 p-2 rounded border border-slate-100 cursor-pointer hover:bg-slate-100">
-                            <input type="checkbox" id="enableAutoBg" checked class="rounded text-blue-600 w-4 h-4 shrink-0">
+                        <label class="flex items-center gap-2 md:gap-3 text-xs md:text-base text-slate-700 mt-2 bg-slate-50 p-3 rounded-lg border border-slate-100 cursor-pointer hover:bg-slate-100">
+                            <input type="checkbox" id="enableAutoBg" checked class="rounded text-blue-600 w-4 h-4 md:w-5 md:h-5 shrink-0">
                             <div class="flex flex-col">
                                 <span class="font-bold flex items-center gap-1">啟用智慧邊緣去白底 <i class="info-icon" data-info="autoBg"></i></span>
-                                <span class="text-[10px] text-slate-500">若圖已透明或有煙霧特效，請取消勾選</span>
+                                <span class="text-[10px] md:text-sm text-slate-500 mt-0.5">若圖已透明或有煙霧特效，請取消勾選</span>
                             </div>
                         </label>
                         
-                        <div id="bgThresholdContainer" class="px-2 mt-1">
-                            <label class="flex justify-between text-[11px] text-slate-500 mb-1">
+                        <div id="bgThresholdContainer" class="px-2 mt-2">
+                            <label class="flex justify-between text-[11px] md:text-sm font-medium text-slate-600 mb-2">
                                 <span class="flex items-center gap-1">去背嚴格度 (越低去越多) <i class="info-icon" data-info="bgThreshold"></i></span>
-                                <span id="bgThresholdVal">240</span>
+                                <span id="bgThresholdVal" class="font-bold text-slate-700">240</span>
                             </label>
                             <input type="range" id="bgThreshold" min="100" max="255" step="1" value="240" class="w-full accent-blue-600">
                         </div>
                     </div>
 
                     <!-- 3. 輸出樣式 -->
-                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-3">
-                        <h2 class="font-bold text-sm text-slate-700 border-b border-slate-100 pb-2 flex items-center justify-between">
+                    <div class="bg-white p-5 md:p-7 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-4">
+                        <h2 class="font-bold text-sm md:text-lg text-slate-700 border-b border-slate-100 pb-2 flex items-center justify-between">
                             輸出樣式設定
                             <i class="info-icon" data-info="borderStyle"></i>
                         </h2>
                         <div>
-                            <label class="flex justify-between text-xs text-slate-500 mb-1"><span>透明邊距 (Padding)</span><span id="paddingVal">20</span></label>
+                            <label class="flex justify-between text-xs md:text-base font-medium text-slate-600 mb-2"><span>透明邊距 (Padding)</span><span id="paddingVal" class="font-bold">20</span></label>
                             <input type="range" id="padding" min="0" max="100" value="20" class="w-full accent-slate-500">
                         </div>
                         <div>
-                            <label class="flex justify-between text-xs text-slate-500 mb-1"><span>白邊寬度</span><span id="borderWVal">8</span></label>
+                            <label class="flex justify-between text-xs md:text-base font-medium text-slate-600 mb-2"><span>白邊寬度</span><span id="borderWVal" class="font-bold">8</span></label>
                             <input type="range" id="borderW" min="0" max="40" value="8" class="w-full accent-slate-500">
                         </div>
-                        <div class="flex items-center gap-2">
-                            <label class="block text-xs text-slate-500">外框顏色</label>
-                            <input type="color" id="borderC" value="#FFFFFF" class="h-6 w-10 cursor-pointer rounded border border-slate-300 bg-white">
-                            <span class="text-[10px] uppercase text-slate-500 font-mono" id="borderCHex">#FFFFFF</span>
+                        <div class="flex items-center gap-3 mt-1">
+                            <label class="block text-xs md:text-base font-medium text-slate-600">外框顏色</label>
+                            <input type="color" id="borderC" value="#FFFFFF" class="h-8 w-12 md:h-10 md:w-16 cursor-pointer rounded border border-slate-300 bg-white">
+                            <span class="text-[10px] md:text-sm uppercase text-slate-500 font-mono font-bold" id="borderCHex">#FFFFFF</span>
                         </div>
                         <!-- LINE 優化設定 -->
-                        <div class="bg-green-50 p-2 rounded border border-green-100 mt-1">
-                            <label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
-                                <input type="checkbox" id="lineOptimize" checked class="rounded text-green-600 w-4 h-4 accent-green-600 shrink-0">
+                        <div class="bg-green-50 p-3 md:p-4 rounded-lg border border-green-100 mt-2">
+                            <label class="flex items-center gap-2 md:gap-3 text-xs md:text-base text-slate-700 cursor-pointer">
+                                <input type="checkbox" id="lineOptimize" checked class="rounded text-green-600 w-4 h-4 md:w-5 md:h-5 accent-green-600 shrink-0">
                                 <div class="flex flex-col">
                                     <span class="font-bold text-green-700 flex items-center gap-1">LINE 貼圖優化 <i class="info-icon" data-info="lineOptimize"></i></span>
-                                    <span class="text-[10px] text-slate-500">限制最大解析度，並強制為雙數</span>
+                                    <span class="text-[10px] md:text-sm text-slate-600 mt-0.5">限制最大解析度，並強制為雙數</span>
                                 </div>
                             </label>
-                            <div id="lineMaxSettings" class="flex gap-2 mt-2 md:pl-6 pl-2">
+                            <div id="lineMaxSettings" class="flex gap-3 md:gap-4 mt-3 pl-2 md:pl-8">
                                 <div class="flex-1">
-                                    <label class="text-[10px] text-slate-500 block mb-1">最大寬度 (Max W)</label>
-                                    <input type="number" id="lineMaxW" value="370" class="w-full border border-green-200 rounded px-1.5 py-1 text-xs outline-none focus:border-green-400">
+                                    <label class="text-[10px] md:text-sm font-medium text-slate-600 block mb-1">最大寬度 (Max W)</label>
+                                    <input type="number" id="lineMaxW" value="370" class="w-full border border-green-300 rounded px-2.5 py-1.5 md:py-2 text-xs md:text-base outline-none focus:border-green-500 bg-white">
                                 </div>
                                 <div class="flex-1">
-                                    <label class="text-[10px] text-slate-500 block mb-1">最大高度 (Max H)</label>
-                                    <input type="number" id="lineMaxH" value="320" class="w-full border border-green-200 rounded px-1.5 py-1 text-xs outline-none focus:border-green-400">
+                                    <label class="text-[10px] md:text-sm font-medium text-slate-600 block mb-1">最大高度 (Max H)</label>
+                                    <input type="number" id="lineMaxH" value="320" class="w-full border border-green-300 rounded px-2.5 py-1.5 md:py-2 text-xs md:text-base outline-none focus:border-green-500 bg-white">
                                 </div>
                             </div>
                         </div>
@@ -133,101 +132,101 @@
                 </div>
 
                 <!-- 2. 框線參數與產生 -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-4">
-                    <h2 class="font-bold text-sm text-slate-700 border-b border-slate-100 pb-2 flex items-center justify-between">
+                <div class="bg-white p-5 md:p-7 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-5">
+                    <h2 class="font-bold text-sm md:text-lg text-slate-700 border-b border-slate-100 pb-2 flex items-center justify-between">
                         2. 框線參數與自動產生
                         <i class="info-icon" data-info="modes"></i>
                     </h2>
                     
                     <!-- 模式切換 -->
-                    <div class="flex gap-2 p-1 bg-slate-100 rounded-lg max-w-sm">
-                        <button id="modeAutoBtn" class="flex-1 text-xs py-1.5 rounded bg-white text-blue-700 font-bold shadow-sm transition">自動偵測</button>
-                        <button id="modeGridBtn" class="flex-1 text-xs py-1.5 rounded text-slate-500 hover:text-slate-700 font-bold transition">棋盤切割</button>
+                    <div class="flex gap-2 p-1.5 bg-slate-100 rounded-lg max-w-md">
+                        <button id="modeAutoBtn" class="flex-1 text-xs md:text-base py-2 md:py-2.5 rounded-md bg-white text-blue-700 font-bold shadow-sm transition">自動偵測</button>
+                        <button id="modeGridBtn" class="flex-1 text-xs md:text-base py-2 md:py-2.5 rounded-md text-slate-500 hover:text-slate-700 font-bold transition">棋盤切割</button>
                     </div>
 
                     <!-- 自動偵測設定區 -->
-                    <div id="autoSettings" class="flex flex-col md:flex-row gap-4">
-                        <div class="bg-blue-50/50 p-4 rounded-lg border border-blue-100 flex-1 flex flex-col gap-4">
+                    <div id="autoSettings" class="flex flex-col md:flex-row gap-5">
+                        <div class="bg-blue-50/50 p-5 rounded-xl border border-blue-100 flex-1 flex flex-col gap-5">
                             <div>
-                                <label class="flex justify-between text-[11px] text-slate-600 mb-1">
+                                <label class="flex justify-between text-[11px] md:text-base font-medium text-slate-700 mb-2">
                                     <span class="flex items-center gap-1">過濾最小面積 <i class="info-icon" data-info="minArea"></i></span>
-                                    <span id="minAreaVal">100</span>
+                                    <span id="minAreaVal" class="font-bold">100</span>
                                 </label>
                                 <input type="range" id="minArea" min="0" max="50000" step="10" value="100" class="w-full accent-blue-500">
                             </div>
                             <div>
-                                <label class="flex justify-between text-[11px] text-slate-600 mb-1">
+                                <label class="flex justify-between text-[11px] md:text-base font-medium text-slate-700 mb-2">
                                     <span class="flex items-center gap-1">合併鄰近距離 <i class="info-icon" data-info="mergeDist"></i></span>
-                                    <span id="mergeDistVal">10</span>
+                                    <span id="mergeDistVal" class="font-bold">10</span>
                                 </label>
                                 <input type="range" id="mergeDist" min="0" max="200" step="2" value="10" class="w-full accent-blue-500">
                             </div>
-                            <div class="flex gap-2 mt-auto pt-2">
-                                <button id="applyFilterMergeBtn" disabled class="flex-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 border border-blue-300 py-2 rounded font-bold transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                            <div class="flex gap-3 mt-auto pt-4">
+                                <button id="applyFilterMergeBtn" disabled class="flex-1 text-xs md:text-base bg-blue-100 hover:bg-blue-200 text-blue-800 border border-blue-300 py-2.5 md:py-3 rounded-lg font-bold transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                                     🔧 僅過濾整理
                                 </button>
-                                <button id="resetDetectBtn" disabled class="flex-1 text-xs bg-slate-800 hover:bg-slate-900 py-2 rounded text-white font-bold transition disabled:opacity-50 disabled:cursor-not-allowed">
+                                <button id="resetDetectBtn" disabled class="flex-1 text-xs md:text-base bg-slate-800 hover:bg-slate-900 py-2.5 md:py-3 rounded-lg text-white font-bold transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                                     🔄 全圖重新偵測
                                 </button>
                             </div>
                         </div>
 
-                        <div class="border border-slate-200 rounded-lg p-4 flex-1 flex flex-col">
-                            <label class="text-xs font-bold text-slate-700 flex items-center gap-1 mb-2">
+                        <div class="border border-slate-200 rounded-xl p-5 flex-1 flex flex-col">
+                            <label class="text-xs md:text-base font-bold text-slate-700 flex items-center gap-2 mb-2">
                                 強制統一所有框線尺寸 <i class="info-icon" data-info="fixedSize"></i>
                             </label>
-                            <p class="text-[10px] text-slate-500 mb-3">適用於遊戲精靈圖(Sprite)，強制將所有圖片統一為指定像素大小，並保持中心對齊。</p>
-                            <div class="flex gap-2 mb-2">
-                                <input type="number" id="fixedW" placeholder="寬度" class="w-full border border-slate-300 rounded px-2 py-1.5 text-xs outline-none focus:border-blue-500 bg-slate-50">
-                                <input type="number" id="fixedH" placeholder="高度" class="w-full border border-slate-300 rounded px-2 py-1.5 text-xs outline-none focus:border-blue-500 bg-slate-50">
+                            <p class="text-[10px] md:text-sm text-slate-500 mb-4 leading-relaxed">適用於遊戲精靈圖(Sprite)，強制將所有圖片統一為指定像素大小，並保持中心對齊。</p>
+                            <div class="flex gap-3 mb-3">
+                                <input type="number" id="fixedW" placeholder="寬度" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs md:text-base outline-none focus:border-blue-500 bg-slate-50">
+                                <input type="number" id="fixedH" placeholder="高度" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs md:text-base outline-none focus:border-blue-500 bg-slate-50">
                             </div>
-                            <button id="getLargestSizeBtn" disabled class="w-full text-center text-[10px] text-blue-600 hover:text-blue-800 bg-transparent disabled:opacity-50 transition mb-3">
+                            <button id="getLargestSizeBtn" disabled class="w-full text-left text-[10px] md:text-sm text-blue-600 hover:text-blue-800 font-medium bg-transparent disabled:opacity-50 transition mb-4 pl-1">
                                 ↳ 抓取目前畫布上「最大的框」的尺寸
                             </button>
-                            <button id="applyFixedSizeBtn" disabled class="mt-auto bg-blue-500 hover:bg-blue-600 text-white text-xs py-2 rounded font-bold transition disabled:opacity-50 disabled:cursor-not-allowed w-full shadow-sm">
+                            <button id="applyFixedSizeBtn" disabled class="mt-auto bg-blue-500 hover:bg-blue-600 text-white text-xs md:text-base py-2.5 md:py-3 rounded-lg font-bold transition disabled:opacity-50 disabled:cursor-not-allowed w-full shadow-sm">
                                 強制套用尺寸
                             </button>
                         </div>
                     </div>
 
                     <!-- 棋盤格設定區 -->
-                    <div id="gridSettings" class="hidden flex-col gap-3">
-                        <select id="gridType" class="max-w-sm border border-slate-300 rounded text-xs p-1.5 outline-none focus:border-blue-500 bg-white">
+                    <div id="gridSettings" class="hidden flex-col gap-4">
+                        <select id="gridType" class="max-w-md border border-slate-300 rounded-lg text-xs md:text-base p-2.5 outline-none focus:border-blue-500 bg-white">
                             <option value="rc">指定切幾等分 (列 x 欄)</option>
                             <option value="wh">指定固定尺寸 (寬 x 高)</option>
                         </select>
-                        <div id="gridRC" class="flex gap-3 max-w-sm">
+                        <div id="gridRC" class="flex gap-4 max-w-md">
                             <div class="flex-1">
-                                <label class="text-[10px] text-slate-500 block mb-1">列數 (Rows)</label>
-                                <input type="number" id="gridRows" value="1" min="1" class="w-full border border-slate-300 rounded px-2 py-1.5 text-xs outline-none focus:border-blue-500">
+                                <label class="text-[10px] md:text-sm font-medium text-slate-600 block mb-1.5">列數 (Rows)</label>
+                                <input type="number" id="gridRows" value="1" min="1" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs md:text-base outline-none focus:border-blue-500">
                             </div>
                             <div class="flex-1">
-                                <label class="text-[10px] text-slate-500 block mb-1">欄數 (Cols)</label>
-                                <input type="number" id="gridCols" value="8" min="1" class="w-full border border-slate-300 rounded px-2 py-1.5 text-xs outline-none focus:border-blue-500">
-                            </div>
-                        </div>
-                        <div id="gridWH" class="flex gap-3 max-w-sm hidden">
-                            <div class="flex-1">
-                                <label class="text-[10px] text-slate-500 block mb-1">框寬度 (W)</label>
-                                <input type="number" id="gridW" value="64" min="1" class="w-full border border-slate-300 rounded px-2 py-1.5 text-xs outline-none focus:border-blue-500">
-                            </div>
-                            <div class="flex-1">
-                                <label class="text-[10px] text-slate-500 block mb-1">框高度 (H)</label>
-                                <input type="number" id="gridH" value="64" min="1" class="w-full border border-slate-300 rounded px-2 py-1.5 text-xs outline-none focus:border-blue-500">
+                                <label class="text-[10px] md:text-sm font-medium text-slate-600 block mb-1.5">欄數 (Cols)</label>
+                                <input type="number" id="gridCols" value="8" min="1" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs md:text-base outline-none focus:border-blue-500">
                             </div>
                         </div>
-                        <button id="applyGridBtn" disabled class="max-w-sm text-xs bg-slate-800 hover:bg-slate-900 text-white py-2 rounded font-bold transition mt-1 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <div id="gridWH" class="flex gap-4 max-w-md hidden">
+                            <div class="flex-1">
+                                <label class="text-[10px] md:text-sm font-medium text-slate-600 block mb-1.5">框寬度 (W)</label>
+                                <input type="number" id="gridW" value="64" min="1" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs md:text-base outline-none focus:border-blue-500">
+                            </div>
+                            <div class="flex-1">
+                                <label class="text-[10px] md:text-sm font-medium text-slate-600 block mb-1.5">框高度 (H)</label>
+                                <input type="number" id="gridH" value="64" min="1" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs md:text-base outline-none focus:border-blue-500">
+                            </div>
+                        </div>
+                        <button id="applyGridBtn" disabled class="max-w-md text-xs md:text-base bg-slate-800 hover:bg-slate-900 text-white py-3 rounded-lg font-bold transition mt-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                             🔠 套用棋盤切割 (會覆蓋目前的框)
                         </button>
                     </div>
                 </div>
 
                 <!-- 單機版下載按鈕區 -->
-                <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl mt-4">
-                    <p class="text-xs text-blue-800 font-bold mb-2">安全與離線使用</p>
-                    <p class="text-[11px] text-blue-600 mb-3">若您有高度隱私需求或需在無網路環境工作，請點擊下方按鈕下載包含完整模組的單機版 HTML，隨點即用。</p>
-                    <button id="downloadOfflineBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow-sm transition-colors text-xs flex justify-center items-center gap-1" onclick="downloadOfflineHTML()">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <div class="bg-blue-50 border border-blue-200 p-5 md:p-6 rounded-xl mt-2 mb-8 shadow-sm">
+                    <p class="text-xs md:text-base text-blue-900 font-bold mb-2">安全與離線使用</p>
+                    <p class="text-[11px] md:text-sm text-blue-700 mb-4 leading-relaxed">若您有高度隱私需求或需在無網路環境工作，請點擊下方按鈕下載包含完整模組的單機版 HTML，隨點即用。</p>
+                    <button id="downloadOfflineBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 md:py-3 px-6 rounded-lg shadow transition-colors text-xs md:text-base flex justify-center items-center gap-2 max-w-sm" onclick="downloadOfflineHTML()">
+                        <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                         下載「單機網頁版 (HTML)」
                     </button>
                 </div>
@@ -239,70 +238,85 @@
         <!-- ========================================== -->
         <div id="panelCanvas" class="absolute inset-0 z-0 bg-slate-100 flex-col hidden h-full overflow-hidden">
             <!-- 畫布區塊 -->
-            <div class="flex-1 p-3 md:p-4 flex flex-col w-full min-h-0">
-                <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-2 gap-2 shrink-0">
-                    <h3 class="font-bold text-slate-700 flex items-center gap-2 text-sm md:text-base shrink-0">
+            <div class="flex-1 p-3 md:p-5 flex flex-col w-full min-h-0">
+                <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-3 gap-3 shrink-0">
+                    <h3 class="font-bold text-slate-700 flex items-center gap-2 text-sm md:text-xl shrink-0">
                         <span>預覽畫布</span>
                         <i class="info-icon" data-info="tools"></i>
-                        <span id="canvasHint" class="text-[10px] md:text-xs font-normal text-slate-500 bg-slate-200 px-2 py-1 rounded hidden md:inline">可拖曳邊角調整框線，或點擊空白處新增框</span>
+                        <span id="canvasHint" class="text-[10px] md:text-sm font-normal text-slate-500 bg-slate-200 px-3 py-1 rounded-md hidden md:inline">支援雙指縮放與平移，電腦版可按住空白鍵拖曳或使用 Ctrl+滾輪</span>
                     </h3>
                     
                     <!-- 工具列 -->
-                    <div class="flex flex-wrap items-center bg-white border border-slate-200 shadow-sm p-1.5 rounded-lg w-full md:w-auto gap-1.5 shrink-0">
-                        <button id="btnUndo" disabled class="px-2 py-1 text-xs md:text-sm font-bold text-slate-600 hover:bg-slate-100 rounded transition opacity-50 cursor-not-allowed flex items-center gap-1 shrink-0" title="復原上一步">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                    <div class="flex flex-wrap items-center bg-white border border-slate-200 shadow-sm p-1.5 md:p-2 rounded-lg w-full md:w-auto gap-1.5 md:gap-2 shrink-0">
+                        <button id="btnUndo" disabled class="px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-base font-bold text-slate-600 hover:bg-slate-100 rounded-md transition opacity-50 cursor-not-allowed flex items-center gap-1.5 shrink-0" title="復原上一步">
+                            <svg class="w-3.5 h-3.5 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
                             <span class="hidden md:inline">復原</span>
                         </button>
-                        <div class="w-px h-4 bg-slate-200 mx-0.5 shrink-0"></div>
+                        <div class="w-px h-5 md:h-6 bg-slate-200 mx-0.5 md:mx-1 shrink-0"></div>
                         
                         <!-- 工具切換 -->
-                        <button id="toolBoxBtn" class="px-2 md:px-3 py-1 text-xs md:text-sm font-bold bg-blue-100 text-blue-700 rounded transition shrink-0">🔲 調整框線</button>
-                        <button id="toolWandBtn" class="px-2 md:px-3 py-1 text-xs md:text-sm font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 rounded transition shrink-0">🪄 魔術棒</button>
+                        <button id="toolPanBtn" class="px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-base font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 rounded-md transition shrink-0" title="平移畫布">🖐️ 拖曳</button>
+                        <button id="toolBoxBtn" class="px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-base font-bold bg-blue-100 text-blue-700 rounded-md transition shrink-0" title="調整或新增框線">🔲 框線</button>
+                        <button id="toolWandBtn" class="px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-base font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 rounded-md transition shrink-0" title="魔術棒去背">🪄 魔術棒</button>
+                        <button id="toolEraserBtn" class="px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-base font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 rounded-md transition shrink-0" title="橡皮擦">🧽 橡皮擦</button>
                         
-                        <div class="w-px h-4 bg-slate-200 mx-0.5 shrink-0"></div>
+                        <div class="w-px h-5 md:h-6 bg-slate-200 mx-0.5 md:mx-1 shrink-0"></div>
+
+                        <!-- 縮放控制 -->
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button id="btnZoomOut" class="px-2 py-1.5 md:py-2 text-xs md:text-base font-bold text-slate-500 hover:bg-slate-100 rounded-md transition" title="縮小 (Ctrl+滾輪向下)">🔍-</button>
+                            <span id="zoomLabel" class="text-[10px] md:text-sm font-bold text-slate-500 w-9 md:w-12 text-center cursor-pointer hover:text-blue-600 transition" title="點擊重設為 100%">100%</span>
+                            <button id="btnZoomIn" class="px-2 py-1.5 md:py-2 text-xs md:text-base font-bold text-slate-500 hover:bg-slate-100 rounded-md transition" title="放大 (Ctrl+滾輪向上)">🔍+</button>
+                        </div>
                         
                         <!-- 魔術棒專屬設定 -->
-                        <div id="wandSettings" class="hidden flex items-center gap-1 px-1 shrink-0">
-                            <span class="text-[10px] md:text-xs text-slate-600 font-bold">去背強度</span>
-                            <input type="range" id="wandTolerance" min="1" max="150" value="40" class="w-16 md:w-20 accent-blue-500">
-                            <span id="wandTolVal" class="text-[10px] text-slate-500 w-5">40</span>
+                        <div id="wandSettings" class="hidden flex items-center gap-2 px-1 md:px-2 shrink-0 ml-1 border-l border-slate-200 pl-2">
+                            <span class="text-[10px] md:text-sm text-slate-600 font-bold">去背強度</span>
+                            <input type="range" id="wandTolerance" min="1" max="150" value="40" class="w-16 md:w-24 accent-blue-500">
+                            <span id="wandTolVal" class="text-[10px] md:text-sm font-bold text-slate-500 w-6">40</span>
+                        </div>
+
+                        <!-- 橡皮擦專屬設定 -->
+                        <div id="eraserSettings" class="hidden flex items-center gap-2 px-1 md:px-2 shrink-0 ml-1 border-l border-slate-200 pl-2">
+                            <span class="text-[10px] md:text-sm text-slate-600 font-bold">擦布大小</span>
+                            <input type="range" id="eraserSize" min="1" max="100" value="20" class="w-16 md:w-24 accent-blue-500">
+                            <span id="eraserSizeVal" class="text-[10px] md:text-sm font-bold text-slate-500 w-6">20</span>
                         </div>
 
                         <!-- 框線專屬設定 -->
-                        <div id="boxSettings" class="flex items-center gap-1 px-1 shrink-0">
-                            <button id="btnDeleteBox" disabled class="text-[10px] md:text-xs px-2 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 disabled:opacity-50 transition border border-red-100">刪除框</button>
-                            <button id="btnClearBoxes" class="text-[10px] md:text-xs px-2 py-1 bg-slate-100 text-slate-700 rounded hover:bg-slate-200 transition border border-slate-200">清空</button>
+                        <div id="boxSettings" class="flex items-center gap-1.5 md:gap-2 px-1 md:px-2 shrink-0 ml-1 border-l border-slate-200 pl-2">
+                            <button id="btnDeleteBox" disabled class="text-[10px] md:text-sm px-2.5 md:px-4 py-1.5 md:py-2 bg-red-50 text-red-600 rounded-md hover:bg-red-100 disabled:opacity-50 transition border border-red-100 font-medium">刪除框</button>
+                            <button id="btnClearBoxes" class="text-[10px] md:text-sm px-2.5 md:px-4 py-1.5 md:py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 transition border border-slate-200 font-medium">清空</button>
                         </div>
                     </div>
                 </div>
                 
-                <!-- 智慧畫布容器 (支援 JS 自動放大尺寸) -->
-                <div class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative checkerboard flex items-center justify-center w-full min-h-0" id="canvasContainer">
-                    <!-- 移除物件縮放限制，交由 JS 精準計算尺寸 -->
-                    <canvas id="mainCanvas" class="drop-shadow-md origin-center"></canvas>
+                <!-- 智慧縮放畫布容器 (設定 touch-action: none 交由 JS 處理拖曳) -->
+                <div class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-auto relative checkerboard flex w-full min-h-0" id="canvasContainer" style="touch-action: none;">
+                    <canvas id="mainCanvas" class="drop-shadow-md origin-center m-auto shrink-0"></canvas>
                 </div>
             </div>
 
             <!-- 輸出結果畫廊 -->
-            <div class="h-56 md:h-64 bg-slate-50 border-t border-slate-200 shadow-inner p-3 md:p-4 flex flex-col shrink-0 w-full min-h-0">
-                <div class="flex flex-col md:flex-row md:justify-between md:items-end mb-3 gap-2 shrink-0">
-                    <div class="flex items-center gap-2">
-                        <h3 class="font-bold text-slate-700 text-sm md:text-base">輸出結果</h3>
-                        <span id="exportAllCount" class="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full font-bold">0</span>
+            <div class="h-60 md:h-72 bg-slate-50 border-t border-slate-200 shadow-inner p-3 md:p-5 flex flex-col shrink-0 w-full min-h-0">
+                <div class="flex flex-col md:flex-row md:justify-between md:items-end mb-3 md:mb-4 gap-3 shrink-0">
+                    <div class="flex items-center gap-3">
+                        <h3 class="font-bold text-slate-700 text-sm md:text-xl">輸出結果</h3>
+                        <span id="exportAllCount" class="bg-blue-100 text-blue-700 text-[10px] md:text-sm px-2.5 md:px-3 py-0.5 md:py-1 rounded-full font-bold">0</span>
                     </div>
                     
                     <!-- 導出按鈕區塊 -->
-                    <div class="flex gap-2 w-full md:w-auto">
-                        <button id="exportSelectedBtn" disabled class="flex-1 md:flex-none text-[11px] md:text-sm bg-white border border-blue-600 text-blue-600 hover:bg-blue-50 font-bold py-1.5 md:py-2 px-3 md:px-5 rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <div class="flex gap-2.5 md:gap-4 w-full md:w-auto">
+                        <button id="exportSelectedBtn" disabled class="flex-1 md:flex-none text-[11px] md:text-base bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 font-bold py-2 md:py-2.5 px-4 md:px-6 rounded-lg shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                             導出選取單張
                         </button>
-                        <button id="exportAllBtn" disabled class="flex-1 md:flex-none text-[11px] md:text-sm bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 md:py-2 px-3 md:px-5 rounded-lg shadow transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed">
+                        <button id="exportAllBtn" disabled class="flex-1 md:flex-none text-[11px] md:text-base bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 md:py-2.5 px-4 md:px-8 rounded-lg shadow transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed">
                             打包全部 ZIP
                         </button>
                     </div>
                 </div>
-                <div id="gallery" class="flex-1 overflow-x-auto flex gap-3 pb-2 items-center w-full bg-white rounded-lg border border-slate-200 p-2 shadow-sm">
-                    <div class="text-[11px] md:text-sm text-slate-400 w-full text-center italic">點擊上方按鈕執行動作，結果會顯示在這裡<br>(手機版可長按圖片儲存)</div>
+                <div id="gallery" class="flex-1 overflow-x-auto flex gap-4 md:gap-5 pb-2 items-center w-full bg-white rounded-xl border border-slate-200 p-3 md:p-4 shadow-sm">
+                    <div class="text-[11px] md:text-base text-slate-400 w-full text-center italic">點擊上方按鈕執行動作，結果會顯示在這裡<br>(手機版可長按圖片儲存)</div>
                 </div>
             </div>
         </div>
@@ -310,24 +324,24 @@
     </main>
 
     <!-- 🌟 全局懸浮 Toast 提示 -->
-    <div id="toastMsg" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-800/95 text-white text-xs md:text-sm px-5 py-2.5 rounded-full shadow-2xl z-50 transition-opacity duration-300 opacity-0 pointer-events-none flex items-center gap-2 font-medium">
+    <div id="toastMsg" class="fixed bottom-10 md:bottom-12 left-1/2 -translate-x-1/2 bg-slate-800/95 text-white text-xs md:text-base px-6 py-3 rounded-full shadow-2xl z-50 transition-opacity duration-300 opacity-0 pointer-events-none flex items-center gap-2 font-medium">
         <span id="statusText">系統已就緒</span>
     </div>
 
     <!-- 💡 全域資訊說明 Modal (彈出視窗) -->
     <div id="infoModal" class="fixed inset-0 z-50 bg-slate-900/50 hidden flex items-center justify-center backdrop-blur-sm opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-xl shadow-2xl p-5 md:p-6 max-w-sm w-[90%] mx-4 transform transition-all scale-95" id="infoModalBox">
-            <div class="flex justify-between items-center mb-4">
-                <h3 id="infoModalTitle" class="text-lg font-bold text-slate-800 flex items-center gap-2">功能說明</h3>
-                <button id="closeInfoModalTop" class="text-slate-400 hover:text-slate-600 outline-none p-1 bg-slate-100 rounded-full">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <div class="bg-white rounded-2xl shadow-2xl p-5 md:p-8 max-w-lg w-[90%] mx-4 transform transition-all scale-95" id="infoModalBox">
+            <div class="flex justify-between items-center mb-5 md:mb-6">
+                <h3 id="infoModalTitle" class="text-lg md:text-2xl font-bold text-slate-800 flex items-center gap-2">功能說明</h3>
+                <button id="closeInfoModalTop" class="text-slate-400 hover:text-slate-600 outline-none p-1.5 md:p-2 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors">
+                    <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            <div id="infoModalContent" class="text-xs md:text-[13px] text-slate-600 leading-relaxed whitespace-pre-line space-y-2 border-t border-slate-100 pt-4 max-h-[60vh] overflow-y-auto">
+            <div id="infoModalContent" class="text-xs md:text-base text-slate-600 leading-relaxed whitespace-pre-line space-y-3 border-t border-slate-100 pt-5 max-h-[60vh] overflow-y-auto">
                 <!-- Content 注入點 -->
             </div>
-            <div class="mt-5 md:mt-6 flex justify-end">
-                <button id="closeInfoModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-bold transition outline-none shadow-sm">了解</button>
+            <div class="mt-6 md:mt-8 flex justify-end">
+                <button id="closeInfoModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 md:px-8 py-2.5 md:py-3 rounded-xl text-sm md:text-lg font-bold transition outline-none shadow-sm">了解</button>
             </div>
         </div>
     </div>
@@ -345,10 +359,10 @@
             fixedSize: { title: "強制統一尺寸", content: "針對遊戲動畫或特定排版需求，若需要輸出的每一張圖都有**一模一樣的像素長寬**，請輸入固定數值後點擊「套用」。\n\n系統會以各個框目前的**中心點**為基準，向外畫出指定大小的完美矩形。" },
             borderStyle: { title: "外觀樣式", content: "🔸 **透明邊距**：會在圖案與白邊之間加上留白的透明緩衝區。\n🔸 **白邊寬度**：會在圖案的最外圍包上一圈實心的輪廓。這是為了保證貼圖在各種底色 (例如深色模式) 的背景下都不會被吃掉輪廓。" },
             lineOptimize: { title: "LINE 貼圖優化", content: "LINE 官方強烈規定：所有上傳圖片的長寬像素**必須為雙數(偶數)**。\n\n勾選此項後，系統在導出貼圖時，若發現長寬超出設定的最大限制，會自動以高畫質進行等比例縮小，並強制將最終數值進位成偶數，保證絕不會被 LINE 退件。" },
-            tools: { title: "畫布互動工具", content: "🔸 **🔲 調整框線**：在畫布上可直接拖曳藍色邊框的四個角落調整大小、拖曳內部移動，或在空白處畫出新框。\n🔸 **🪄 魔術棒去背**：當畫面中有封閉在角色內部沒被去背的顏色時，點擊該區域，系統就會以相近色自動消除它！若去不乾淨可調高上方容差強度。" }
+            tools: { title: "畫布互動工具", content: "🔸 **🖐️ 拖曳(Pan)**：切換後可拖曳平移畫布。若在「框線」模式，可透過雙指滑動、按住滑鼠中鍵、或按住空白鍵來實現平移。\n🔸 **🔍 縮放**：支援雙指縮放，或在電腦版按住 Ctrl(Command) + 滾輪快速縮放。\n🔸 **🔲 調整框線**：可直接拖曳藍色邊框角落調整大小，或在空白處畫出新框。\n🔸 **🪄 魔術棒去背**：點擊未去背的顏色即可自動消除！若去不乾淨可調高上方強度。\n🔸 **🧽 橡皮擦**：可手動擦除任何不要的圖案或雜點，支援復原功能！" }
         };
 
-        const infoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-[16px] h-[16px] md:w-[18px] md:h-[18px] text-blue-400 hover:text-blue-600 cursor-pointer transition drop-shadow-sm"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" /></svg>`;
+        const infoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-[16px] h-[16px] md:w-[20px] md:h-[20px] text-blue-400 hover:text-blue-600 cursor-pointer transition drop-shadow-sm"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" /></svg>`;
         document.querySelectorAll('.info-icon').forEach(el => {
             el.innerHTML = infoSvg;
             el.addEventListener('click', (e) => { e.stopPropagation(); showInfoModal(el.getAttribute('data-info')); });
@@ -361,7 +375,7 @@
         function showInfoModal(key) {
             const data = infoData[key];
             if(!data) return;
-            document.getElementById('infoModalTitle').innerHTML = `<svg class="w-5 h-5 md:w-6 md:h-6 text-blue-500 drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${data.title}`;
+            document.getElementById('infoModalTitle').innerHTML = `<svg class="w-5 h-5 md:w-7 md:h-7 text-blue-500 drop-shadow-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>${data.title}`;
             let contentHtml = data.content.replace(/\*\*(.*?)\*\*/g, '<span class="font-bold text-slate-800">$1</span>');
             document.getElementById('infoModalContent').innerHTML = contentHtml;
             
@@ -391,13 +405,21 @@
             boxes: [],
             selectedIndex: null,
             scale: 1,
+            userZoom: 1.0,
             toolMode: 'box', 
             history: [], 
-            drag: { active: false, action: null, startX: 0, startY: 0, origBox: null },
+            pointerPos: null,
+            isSpaceDown: false,
+            drag: { 
+                active: false, action: null, startX: 0, startY: 0, 
+                lastPanX: 0, lastPanY: 0, origBox: null, 
+                isErasing: false, isPanning: false, initialPinchDist: null, initialZoom: 1 
+            },
             params: {
                 enableAutoBg: true, bgThreshold: 240, minArea: 100, mergeDist: 10,
                 padding: 20, borderW: 8, borderC: '#FFFFFF', lineOptimize: true, lineMaxW: 370, lineMaxH: 320,
-                wandTolerance: 40
+                wandTolerance: 40,
+                eraserSize: 20
             }
         };
 
@@ -439,25 +461,36 @@
             exportAllCount: document.getElementById('exportAllCount'),
             statusMsg: document.getElementById('statusText'),
             gallery: document.getElementById('gallery'),
+            
+            toolPanBtn: document.getElementById('toolPanBtn'),
             toolBoxBtn: document.getElementById('toolBoxBtn'),
             toolWandBtn: document.getElementById('toolWandBtn'),
+            toolEraserBtn: document.getElementById('toolEraserBtn'),
             canvasHint: document.getElementById('canvasHint'),
             downloadOfflineBtn: document.getElementById('downloadOfflineBtn'),
             
+            btnZoomIn: document.getElementById('btnZoomIn'),
+            btnZoomOut: document.getElementById('btnZoomOut'),
+            zoomLabel: document.getElementById('zoomLabel'),
+
             btnUndo: document.getElementById('btnUndo'),
             btnDeleteBox: document.getElementById('btnDeleteBox'),
             btnClearBoxes: document.getElementById('btnClearBoxes'),
+            
             wandSettings: document.getElementById('wandSettings'),
             boxSettings: document.getElementById('boxSettings'),
-            wandTolerance: document.getElementById('wandTolerance')
+            eraserSettings: document.getElementById('eraserSettings'),
+            
+            wandTolerance: document.getElementById('wandTolerance'),
+            eraserSize: document.getElementById('eraserSize')
         };
 
         // ==========================================
-        // 分頁切換邏輯 (防止重疊與強制重繪)
+        // 分頁切換邏輯
         // ==========================================
         function switchTab(tab) {
-            const activeTabClass = "flex-1 py-2.5 md:py-3 text-sm font-bold border-b-[3px] border-blue-600 text-blue-600 bg-blue-50/30 transition-colors";
-            const inactiveTabClass = "flex-1 py-2.5 md:py-3 text-sm font-bold border-b-[3px] border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors";
+            const activeTabClass = "flex-1 py-2.5 md:py-4 text-sm md:text-lg font-bold border-b-[3px] border-blue-600 text-blue-600 bg-blue-50/30 transition-colors";
+            const inactiveTabClass = "flex-1 py-2.5 md:py-4 text-sm md:text-lg font-bold border-b-[3px] border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors";
 
             if (tab === 'settings') {
                 els.tabBtnSettings.className = activeTabClass;
@@ -474,7 +507,6 @@
                 els.panelCanvas.classList.add('flex'); 
                 els.panelSettings.classList.add('hidden');
                 
-                // 完全切換並解除隱藏後，強制執行畫布放大適配
                 updateCanvasDisplaySize();
             }
         }
@@ -485,13 +517,11 @@
         let toastTimeout;
         function setStatus(msg, loading = false) {
             const toast = document.getElementById('toastMsg');
-            
             if(loading) {
                 els.statusMsg.innerHTML = `<span class="animate-pulse flex items-center gap-2">⏳ ${msg}</span>`;
             } else {
                 els.statusMsg.textContent = msg;
             }
-            
             toast.classList.remove('opacity-0');
             clearTimeout(toastTimeout);
             
@@ -581,6 +611,7 @@
                     valEl.textContent = val;
                     state.params[paramKey] = val;
                     if(paramKey === 'padding' || paramKey === 'borderW') renderMainCanvas();
+                    if(paramKey === 'eraserSize') renderMainCanvas(); 
                 });
                 if(paramKey === 'bgThreshold') {
                     el.addEventListener('change', () => { if(state.img.src && state.params.enableAutoBg) runDetectionFromScratch(); });
@@ -601,17 +632,23 @@
                 state.params.wandTolerance = parseInt(e.target.value);
                 document.getElementById('wandTolVal').textContent = state.params.wandTolerance;
             });
+            
+            els.eraserSize.addEventListener('input', (e) => {
+                state.params.eraserSize = parseInt(e.target.value);
+                document.getElementById('eraserSizeVal').textContent = state.params.eraserSize;
+                renderMainCanvas(); 
+            });
 
             els.modeAutoBtn.onclick = () => {
-                els.modeAutoBtn.className = "flex-1 text-xs py-1.5 rounded bg-white text-blue-700 font-bold shadow-sm transition";
-                els.modeGridBtn.className = "flex-1 text-xs py-1.5 rounded text-slate-500 hover:text-slate-700 font-bold transition";
+                els.modeAutoBtn.className = "flex-1 text-xs md:text-base py-2 md:py-2.5 rounded-md bg-white text-blue-700 font-bold shadow-sm transition";
+                els.modeGridBtn.className = "flex-1 text-xs md:text-base py-2 md:py-2.5 rounded-md text-slate-500 hover:text-slate-700 font-bold transition";
                 els.autoSettings.classList.remove('hidden');
                 els.gridSettings.classList.add('hidden');
                 els.gridSettings.classList.remove('flex');
             };
             els.modeGridBtn.onclick = () => {
-                els.modeGridBtn.className = "flex-1 text-xs py-1.5 rounded bg-white text-blue-700 font-bold shadow-sm transition";
-                els.modeAutoBtn.className = "flex-1 text-xs py-1.5 rounded text-slate-500 hover:text-slate-700 font-bold transition";
+                els.modeGridBtn.className = "flex-1 text-xs md:text-base py-2 md:py-2.5 rounded-md bg-white text-blue-700 font-bold shadow-sm transition";
+                els.modeAutoBtn.className = "flex-1 text-xs md:text-base py-2 md:py-2.5 rounded-md text-slate-500 hover:text-slate-700 font-bold transition";
                 els.autoSettings.classList.add('hidden');
                 els.gridSettings.classList.remove('hidden');
                 els.gridSettings.classList.add('flex');
@@ -625,8 +662,15 @@
                 }
             });
 
+            els.toolPanBtn.onclick = () => setToolMode('pan');
             els.toolBoxBtn.onclick = () => setToolMode('box');
             els.toolWandBtn.onclick = () => setToolMode('wand');
+            els.toolEraserBtn.onclick = () => setToolMode('eraser');
+
+            // 縮放按鈕功能
+            els.btnZoomIn.onclick = () => { state.userZoom = Math.min(state.userZoom + 0.25, 10); updateCanvasDisplaySize(); };
+            els.btnZoomOut.onclick = () => { state.userZoom = Math.max(state.userZoom - 0.25, 0.1); updateCanvasDisplaySize(); };
+            els.zoomLabel.onclick = () => { state.userZoom = 1; updateCanvasDisplaySize(); };
 
             els.upload.addEventListener('change', handleUpload);
             
@@ -661,15 +705,58 @@
             
             if(els.downloadOfflineBtn) els.downloadOfflineBtn.onclick = downloadOfflineHTML;
 
-            els.canvas.addEventListener('mousedown', handlePointerDown);
-            els.canvas.addEventListener('touchstart', handlePointerDown, {passive: false});
+            // 事件監聽改綁定到外層容器，確保在灰色背景上也能拖曳平移
+            const container = document.getElementById('canvasContainer');
+            container.addEventListener('mousedown', handlePointerDown);
+            container.addEventListener('touchstart', handlePointerDown, {passive: false});
             window.addEventListener('mousemove', handlePointerMove);
-            els.canvas.addEventListener('touchmove', handlePointerMove, {passive: false});
+            container.addEventListener('touchmove', handlePointerMove, {passive: false});
             window.addEventListener('mouseup', handlePointerUp);
             window.addEventListener('touchend', handlePointerUp);
             
-            // 使用 ResizeObserver 自動偵測容器大小變化，確保畫布永遠能撐滿！
-            const container = document.getElementById('canvasContainer');
+            // 電腦版滾輪縮放 (需按住 Ctrl 或 Command 鍵)
+            container.addEventListener('wheel', (e) => {
+                if(e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    // 根據當前縮放倍率調整縮放速度，讓縮放體驗更平滑
+                    const zoomSpeed = 0.05 * Math.max(1, state.userZoom);
+                    if(e.deltaY < 0) {
+                        state.userZoom = Math.min(state.userZoom + zoomSpeed, 10);
+                    } else {
+                        state.userZoom = Math.max(state.userZoom - zoomSpeed, 0.1);
+                    }
+                    updateCanvasDisplaySize();
+                }
+            }, { passive: false });
+
+            // 電腦版：按住空白鍵即可臨時切換為拖曳模式
+            window.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT' && !state.isSpaceDown) {
+                    e.preventDefault();
+                    state.isSpaceDown = true;
+                    els.canvas.style.cursor = 'grab';
+                }
+            });
+            window.addEventListener('keyup', (e) => {
+                if (e.code === 'Space') {
+                    state.isSpaceDown = false;
+                    setToolMode(state.toolMode); // 恢復原本的游標
+                }
+            });
+
+            // 橡皮擦游標預覽
+            container.addEventListener('mousemove', (e) => {
+                if (state.toolMode === 'eraser' && !state.drag.isPanning) {
+                    state.pointerPos = getPointerPos(e);
+                    renderMainCanvas();
+                }
+            });
+            container.addEventListener('mouseleave', () => {
+                state.pointerPos = null;
+                if (state.toolMode === 'eraser') renderMainCanvas();
+            });
+            
+            // 視窗變化自動偵測適配
             if (window.ResizeObserver) {
                 const resizeObserver = new ResizeObserver(() => {
                     if (!els.panelCanvas.classList.contains('hidden')) {
@@ -685,41 +772,50 @@
                 });
             }
 
-            // 初始化先切到設定分頁
             switchTab('settings');
         }
 
         function setToolMode(mode) {
             state.toolMode = mode;
-            if (mode === 'box') {
-                els.toolBoxBtn.className = "px-2 md:px-3 py-1 text-xs md:text-sm font-bold bg-blue-100 text-blue-700 rounded transition shrink-0";
-                els.toolWandBtn.className = "px-2 md:px-3 py-1 text-xs md:text-sm font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 rounded transition shrink-0";
+            const activeClass = "px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-base font-bold bg-blue-100 text-blue-700 rounded-md transition shrink-0 shadow-inner";
+            const inactiveClass = "px-2 md:px-4 py-1.5 md:py-2 text-xs md:text-base font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 rounded-md transition shrink-0";
+            
+            els.toolPanBtn.className = (mode === 'pan') ? activeClass : inactiveClass;
+            els.toolBoxBtn.className = (mode === 'box') ? activeClass : inactiveClass;
+            els.toolWandBtn.className = (mode === 'wand') ? activeClass : inactiveClass;
+            els.toolEraserBtn.className = (mode === 'eraser') ? activeClass : inactiveClass;
+            
+            els.boxSettings.classList.add('hidden');
+            els.wandSettings.classList.add('hidden');
+            els.eraserSettings.classList.add('hidden');
+            
+            if (mode === 'pan') {
+                els.canvas.style.cursor = "grab";
+            } else if (mode === 'box') {
                 els.canvas.style.cursor = "crosshair";
-                els.wandSettings.classList.add('hidden');
                 els.boxSettings.classList.remove('hidden');
-            } else {
-                els.toolWandBtn.className = "px-2 md:px-3 py-1 text-xs md:text-sm font-bold bg-blue-100 text-blue-700 rounded transition shrink-0";
-                els.toolBoxBtn.className = "px-2 md:px-3 py-1 text-xs md:text-sm font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 rounded transition shrink-0";
-                els.canvas.style.cursor = "pointer";
+            } else if (mode === 'wand') {
+                els.canvas.style.cursor = "crosshair"; 
                 els.wandSettings.classList.remove('hidden');
-                els.boxSettings.classList.add('hidden');
+            } else if (mode === 'eraser') {
+                els.canvas.style.cursor = "none"; 
+                els.eraserSettings.classList.remove('hidden');
             }
+            renderMainCanvas();
         }
 
         // ==========================================
-        // 智慧畫布放大系統 (將過小的圖片撐滿容器)
+        // 智慧畫布放大與置中系統
         // ==========================================
         function updateCanvasDisplaySize() {
             if(!state.processedCanvas) return;
             const container = document.getElementById('canvasContainer');
             
-            // 如果容器寬度為 0，代表 DOM 還沒渲染完成 (Display: none 狀態)，稍微等一下再試一次
             if(!container || container.clientWidth === 0 || container.clientHeight === 0) {
                 setTimeout(updateCanvasDisplaySize, 20);
                 return; 
             }
 
-            // 計算可用空間
             const padding = window.innerWidth < 768 ? 20 : 40;
             const cw = container.clientWidth - padding;
             const ch = container.clientHeight - padding;
@@ -727,16 +823,34 @@
             const w = state.processedCanvas.width;
             const h = state.processedCanvas.height;
 
-            // 計算最完美填滿畫面的比例
-            const displayScale = Math.min(cw / w, ch / h);
+            const baseScale = Math.min(cw / w, ch / h);
+            const finalScale = baseScale * state.userZoom;
             
-            // 強制設定 CSS 渲染大小，讓畫布無論原始圖多小都能被放大撐滿
-            els.canvas.style.width = (w * displayScale) + 'px';
-            els.canvas.style.height = (h * displayScale) + 'px';
+            const newW = w * finalScale;
+            const newH = h * finalScale;
+            const oldW = parseFloat(els.canvas.style.width);
+            const oldH = parseFloat(els.canvas.style.height);
+
+            els.canvas.style.width = newW + 'px';
+            els.canvas.style.height = newH + 'px';
             
-            // 如果圖片被放大了(大於1)，強制開啟 pixelated 點陣模式，讓圖片保持清晰不模糊！
-            els.canvas.style.imageRendering = displayScale > 1 ? 'pixelated' : 'auto';
+            // 放大超過一倍強制啟動點陣抗鋸齒 (Pixelated)
+            els.canvas.style.imageRendering = finalScale > 1 ? 'pixelated' : 'auto';
             
+            if (els.zoomLabel) {
+                els.zoomLabel.textContent = Math.round(state.userZoom * 100) + '%';
+            }
+
+            // 保持視覺中心點不偏移的捲軸校正演算法
+            if (oldW && oldH && !isNaN(oldW) && !isNaN(oldH)) {
+                const ratioW = newW / oldW;
+                const ratioH = newH / oldH;
+                const centerX = container.scrollLeft + container.clientWidth / 2;
+                const centerY = container.scrollTop + container.clientHeight / 2;
+                container.scrollLeft = (centerX * ratioW) - container.clientWidth / 2;
+                container.scrollTop = (centerY * ratioH) - container.clientHeight / 2;
+            }
+
             renderMainCanvas();
         }
 
@@ -882,6 +996,22 @@
             return false;
         }
 
+        // 橡皮擦連線塗抹函數
+        function erasePath(x0, y0, x1, y1) {
+            if(!state.processedCanvas) return;
+            const ctx = state.processedCanvas.getContext('2d', { willReadFrequently: true });
+            ctx.save();
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.lineWidth = state.params.eraserSize;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x1, y1);
+            ctx.stroke();
+            ctx.restore();
+        }
+
         function findRawRegions(canvas) {
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
             const w = canvas.width, h = canvas.height;
@@ -933,6 +1063,8 @@
             const file = e.target.files[0];
             if (!file) return;
             
+            // 讀取新圖片時，重設比例為 100% 並清空復原歷史
+            state.userZoom = 1.0;
             state.history = [];
             if(els.btnUndo) {
                 els.btnUndo.disabled = true;
@@ -979,7 +1111,6 @@
                 setStatus(`處理完成！共找到 ${state.boxes.length} 個區塊`);
                 toggleActionButtons(true);
                 
-                // 自動切換到畫布預覽分頁
                 switchTab('canvas');
             }, 50);
         }
@@ -1115,14 +1246,15 @@
             return { w: finalW, h: finalH };
         }
 
+        // ==========================================
+        // 核心畫布與框線渲染引擎 (修復遺漏的定義)
+        // ==========================================
         function renderMainCanvas() {
             if(!state.processedCanvas) return;
             const w = state.processedCanvas.width, h = state.processedCanvas.height;
             
-            // 寫入實際尺寸
             els.canvas.width = w; els.canvas.height = h;
             
-            // 精確抓取顯示在螢幕上的 CSS 尺寸，以此計算滑鼠座標映射比例
             const rect = els.canvas.getBoundingClientRect();
             if(rect.width > 0) {
                 state.scale = rect.width / w;
@@ -1144,7 +1276,7 @@
 
                 const dims = calculateFinalDimensions(box);
                 els.ctx.fillStyle = isSel ? '#3b82f6' : 'rgba(239, 68, 68, 0.9)';
-                const fs = Math.max(12, 14 / state.scale);
+                const fs = Math.max(12, 16 / state.scale); // 字體微調放大
                 els.ctx.font = `bold ${fs}px sans-serif`;
                 els.ctx.fillText(`ID: ${i+1} (${dims.w}x${dims.h})`, box.left + 5/state.scale, box.top + fs + 5/state.scale);
 
@@ -1159,6 +1291,21 @@
                     drawHandle(box.left, box.bottom); drawHandle(box.right, box.bottom);
                 }
             });
+
+            if (state.toolMode === 'eraser' && state.pointerPos) {
+                const eRadius = state.params.eraserSize / 2;
+                els.ctx.beginPath();
+                els.ctx.arc(state.pointerPos.x, state.pointerPos.y, eRadius, 0, Math.PI * 2);
+                
+                els.ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+                els.ctx.lineWidth = Math.max(1, 1 / state.scale);
+                els.ctx.stroke();
+                
+                els.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                els.ctx.setLineDash([5 / state.scale, 5 / state.scale]);
+                els.ctx.stroke();
+                els.ctx.setLineDash([]);
+            }
 
             const count = state.boxes.length;
             if(count > 0) {
@@ -1177,29 +1324,67 @@
         }
 
         // ==========================================
-        // 畫布滑鼠與觸控事件
+        // 原生多點觸控與座標轉換計算
         // ==========================================
+        function getRawPointerPos(e) {
+            if (e.touches && e.touches.length > 0) {
+                // 如果是雙指觸控，取中心點
+                if (e.touches.length === 2) {
+                    return { x: (e.touches[0].clientX + e.touches[1].clientX) / 2, y: (e.touches[0].clientY + e.touches[1].clientY) / 2 };
+                }
+                return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            } else if (e.changedTouches && e.changedTouches.length > 0) {
+                return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+            }
+            return { x: e.clientX, y: e.clientY };
+        }
+
         function getPointerPos(e) {
             const rect = els.canvas.getBoundingClientRect();
             const scaleX = els.canvas.width / rect.width, scaleY = els.canvas.height / rect.height;
-            let cx = e.clientX, cy = e.clientY;
-            
-            if (e.touches && e.touches.length > 0) {
-                cx = e.touches[0].clientX; cy = e.touches[0].clientY;
-            } else if (e.changedTouches && e.changedTouches.length > 0) {
-                cx = e.changedTouches[0].clientX; cy = e.changedTouches[0].clientY;
-            }
-            
-            return { x: (cx - rect.left) * scaleX, y: (cy - rect.top) * scaleY };
+            let raw = getRawPointerPos(e);
+            return { x: (raw.x - rect.left) * scaleX, y: (raw.y - rect.top) * scaleY };
         }
 
         function handlePointerDown(e) {
             if(!state.processedCanvas) return;
+            
+            // 雙指觸控：強制進入平移與縮放模式 (Pinch to Zoom)
+            if (e.touches && e.touches.length === 2) {
+                state.drag.active = false;
+                state.drag.isErasing = false;
+                state.drag.isPanning = true;
+                
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                state.drag.initialPinchDist = Math.hypot(dx, dy);
+                state.drag.initialZoom = state.userZoom;
+                
+                const raw = getRawPointerPos(e);
+                state.drag.lastPanX = raw.x;
+                state.drag.lastPanY = raw.y;
+                if(e.cancelable) e.preventDefault();
+                return;
+            }
+
+            // 單指/滑鼠 平移模式
+            if (state.toolMode === 'pan' || e.button === 1 || state.isSpaceDown) {
+                state.drag.active = false;
+                state.drag.isErasing = false;
+                state.drag.isPanning = true;
+                const raw = getRawPointerPos(e);
+                state.drag.lastPanX = raw.x;
+                state.drag.lastPanY = raw.y;
+                if(e.type === 'touchstart' && e.cancelable) e.preventDefault();
+                els.canvas.style.cursor = 'grabbing';
+                return;
+            }
+
             const pos = getPointerPos(e);
 
             if (state.toolMode === 'wand') {
                 setStatus("魔術棒去背處理中...", true);
-                if(e.type === 'touchstart') e.preventDefault(); 
+                if(e.type === 'touchstart' && e.cancelable) e.preventDefault(); 
                 
                 setTimeout(() => {
                     saveState(); 
@@ -1215,6 +1400,17 @@
                         setStatus(`該區域無法消除或已透明`); 
                     }
                 }, 10);
+                return;
+            }
+
+            if (state.toolMode === 'eraser') {
+                saveState();
+                state.drag.isErasing = true;
+                state.drag.lastX = pos.x;
+                state.drag.lastY = pos.y;
+                erasePath(pos.x, pos.y, pos.x, pos.y);
+                renderMainCanvas();
+                if(e.type === 'touchstart' && e.cancelable) e.preventDefault();
                 return;
             }
 
@@ -1257,16 +1453,55 @@
             if(newSelIdx !== null) {
                 state.selectedIndex = newSelIdx;
                 state.drag.origBox = { ...state.boxes[state.selectedIndex] };
-                if(e.type === 'touchstart') e.preventDefault(); 
+                if(e.type === 'touchstart' && e.cancelable) e.preventDefault(); 
             } else {
                 state.boxes.push({left: pos.x, top: pos.y, right: pos.x, bottom: pos.y});
                 state.selectedIndex = state.boxes.length - 1;
-                if(e.type === 'touchstart') e.preventDefault(); 
+                if(e.type === 'touchstart' && e.cancelable) e.preventDefault(); 
             }
             renderMainCanvas();
         }
 
         function handlePointerMove(e) {
+            // 處理平移與縮放 (Pan & Zoom)
+            if (state.drag.isPanning) {
+                if (e.cancelable && e.type === 'touchmove') e.preventDefault();
+                
+                // 雙指縮放 (Pinch Zoom)
+                if (e.touches && e.touches.length === 2 && state.drag.initialPinchDist) {
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    const dist = Math.hypot(dx, dy);
+                    const scale = dist / state.drag.initialPinchDist;
+                    state.userZoom = Math.max(0.1, Math.min(state.drag.initialZoom * scale, 10));
+                    updateCanvasDisplaySize();
+                }
+
+                // 平移畫布
+                const raw = getRawPointerPos(e);
+                const deltaX = raw.x - state.drag.lastPanX;
+                const deltaY = raw.y - state.drag.lastPanY;
+                
+                const container = document.getElementById('canvasContainer');
+                container.scrollLeft -= deltaX;
+                container.scrollTop -= deltaY;
+                
+                state.drag.lastPanX = raw.x;
+                state.drag.lastPanY = raw.y;
+                return;
+            }
+
+            if (state.toolMode === 'eraser' && state.drag.isErasing) {
+                if (e.cancelable && e.type === 'touchmove') e.preventDefault();
+                const pos = getPointerPos(e);
+                erasePath(state.drag.lastX, state.drag.lastY, pos.x, pos.y);
+                state.drag.lastX = pos.x;
+                state.drag.lastY = pos.y;
+                state.pointerPos = pos;
+                renderMainCanvas();
+                return;
+            }
+
             if(!state.drag.active || state.selectedIndex === null || state.toolMode !== 'box') return;
             if (e.cancelable && e.type === 'touchmove') e.preventDefault(); 
 
@@ -1295,7 +1530,31 @@
             renderMainCanvas();
         }
 
+        // ==========================================
+        // 觸控放開
+        // ==========================================
         function handlePointerUp(e) {
+            if (state.drag.isPanning) {
+                if (!e.touches || e.touches.length === 0 || e.type === 'mouseup') {
+                    state.drag.isPanning = false;
+                    state.drag.initialPinchDist = null;
+                    setToolMode(state.toolMode); 
+                } else if (e.touches.length === 1) {
+                    const raw = getRawPointerPos(e);
+                    state.drag.lastPanX = raw.x;
+                    state.drag.lastPanY = raw.y;
+                    state.drag.initialPinchDist = null;
+                }
+                return;
+            }
+
+            if (state.toolMode === 'eraser' && state.drag.isErasing) {
+                state.drag.isErasing = false;
+                setStatus("已擦除！");
+                renderMainCanvas();
+                return;
+            }
+
             if(!state.drag.active) return;
             state.drag.active = false;
             
@@ -1405,12 +1664,12 @@
                     zip.file(fileName, base64Data, {base64: true});
                     
                     html += `
-                        <div class="flex flex-col items-center gap-2 shrink-0 bg-slate-50 p-2 md:p-3 rounded-xl border border-slate-200 shadow-sm">
-                            <div class="w-28 h-28 md:w-36 md:h-36 checkerboard rounded-lg flex items-center justify-center p-2 relative">
-                                <span class="absolute top-1.5 left-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded shadow-sm z-10">${finalW}x${finalH}</span>
+                        <div class="flex flex-col items-center gap-2 md:gap-3 shrink-0 bg-slate-50 p-3 md:p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <div class="w-28 h-28 md:w-40 md:h-40 checkerboard rounded-lg flex items-center justify-center p-2 relative">
+                                <span class="absolute top-1.5 left-1.5 bg-black/60 text-white text-[10px] md:text-xs px-2 py-0.5 rounded shadow-sm z-10">${finalW}x${finalH}</span>
                                 <img src="${dataUrl}" class="w-full h-full object-contain drop-shadow-md touch-callout-default" style="image-rendering: pixelated;">
                             </div>
-                            <a href="${dataUrl}" download="${fileName}" target="_blank" rel="noopener noreferrer" class="text-[11px] md:text-xs text-blue-600 font-bold bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg w-full text-center border border-blue-200 transition-colors">📥 儲存 (${fileName})</a>
+                            <a href="${dataUrl}" download="${fileName}" target="_blank" rel="noopener noreferrer" class="text-[11px] md:text-sm text-blue-600 font-bold bg-blue-50 hover:bg-blue-100 px-4 md:px-5 py-2 md:py-2.5 rounded-lg w-full text-center border border-blue-200 transition-colors">📥 儲存 (${fileName})</a>
                         </div>
                     `;
                 });
