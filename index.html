@@ -41,7 +41,7 @@
         <div class="p-4 md:p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
             <div>
                 <h1 class="text-lg md:text-xl font-bold text-slate-800 flex items-center gap-2">✂️ 貼圖切割工具</h1>
-                <p class="text-[11px] md:text-xs text-slate-500 mt-1">完全離線，安全無隱私風險</p>
+                <p class="text-[11px] md:text-xs text-slate-500 mt-1">單機執行，安全無隱私風險</p>
             </div>
             <!-- PWA 安裝按鈕 -->
             <button id="installAppBtn" class="hidden px-3 py-1.5 text-xs font-bold bg-green-500 hover:bg-green-600 text-white rounded shadow-sm transition flex items-center gap-1">
@@ -214,10 +214,10 @@
                 打包導出全部 (<span id="exportAllCount">0</span>) ZIP
             </button>
             
-            <!-- 終極離線下載按鈕 -->
+            <!-- 單機網頁下載按鈕 -->
             <button id="downloadOfflineBtn" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-4 rounded shadow transition-colors text-xs mt-1 flex justify-center items-center gap-1" onclick="downloadOfflineHTML()">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                下載「完全離線單檔版」
+                下載「單機網頁版 (HTML)」
             </button>
             
             <p id="statusMsg" class="text-xs text-center text-slate-500 mt-1 font-medium">請先選擇圖片</p>
@@ -993,59 +993,37 @@
         }
 
         // ==========================================
-        // 終極打包離線版 (純單檔產生器) - 增強版
+        // 單機版檔案下載 (不呼叫 fetch 以免被 CORS/CSP 阻擋)
         // ==========================================
         async function downloadOfflineHTML() {
             if (location.protocol === 'file:') {
-                alert('您目前已經在使用離線單檔版，無需再次下載！');
+                alert('您目前已經在使用單機版，無需再次下載！');
                 return;
             }
 
-            setStatus("正在封裝完全離線版，請稍候 (這需要一點網路下載時間)...", true);
+            setStatus("正在產生單機網頁版...", true);
             try {
-                // 增強型抓取：多重備用節點 (解決瀏覽器擋 CORS 問題)
-                const fetchText = async (url) => {
-                    const proxies = [
-                        url, // 1. 直接抓取
-                        'https://api.allorigins.win/raw?url=' + encodeURIComponent(url), // 2. 備用節點 A
-                        'https://corsproxy.io/?' + encodeURIComponent(url) // 3. 備用節點 B
-                    ];
-                    
-                    for (let p of proxies) {
-                        try {
-                            const res = await fetch(p);
-                            if (res.ok) return await res.text();
-                        } catch (e) { console.warn('Fetch failed for:', p); }
-                    }
-                    throw new Error('All fetch attempts failed for ' + url);
-                };
-
-                const twCode = await fetchText('https://cdn.tailwindcss.com');
-                const jzCode = await fetchText('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
-
-                // 複製當前的 HTML (去除網頁上因為執行產生的動態 style)
+                // 不使用 fetch 抓取外部資源以避免瀏覽器或 Canvas 安全沙盒阻擋。
+                // 直接擷取當前網頁的 HTML 結構，保留 CDN 連結。
                 let html = '<!DOCTYPE html>\n<html lang="zh-TW">\n' + document.documentElement.innerHTML + '\n</html>';
+                
+                // 清理動態產生的樣式，保持原始 CDN 引入即可
                 html = html.replace(/<style id="tailwind[^>]*>.*?<\/style>/gis, '');
 
-                // 替換 CDN 為內部原始碼
-                html = html.replace(/<script src="https:\/\/cdn\.tailwindcss\.com"><\/script>/gi, '<script>' + twCode + '<\/script>');
-                html = html.replace(/<script src="https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/jszip\/3\.10\.1\/jszip\.min\.js"><\/script>/gi, '<script>' + jzCode + '<\/script>');
-
-                // 下載檔案
                 const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = '貼圖切割工具_離線版.html';
+                a.download = '貼圖切割工具_單機版.html';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                setStatus("✅ 完全離線單檔版下載成功！存放在手機檔案或電腦桌面，點開即用。");
+                setStatus("✅ 單機版下載成功！存放在裝置中，點開即可使用。");
             } catch(e) {
                 console.error(e);
-                alert("⚠️ 瀏覽器安全機制阻擋了自動下載外部資源！\n\n💡 離線版 100% 成功替代方案：\n請直接使用瀏覽器的「另存網頁」功能！\n(電腦請按 Ctrl+S，手機請在瀏覽器選單選擇「儲存網頁」或「加到桌面」)\n並選擇「網頁，單一檔案」，效果完全一樣！");
-                setStatus("❌ 封裝離線版失敗，請使用瀏覽器內建的儲存功能 (Ctrl+S)。");
+                alert("下載失敗，這可能是因為您所在的瀏覽器沙盒限制。\n💡 替代方案：\n請直接使用瀏覽器的「儲存網頁」功能 (電腦請按 Ctrl+S，手機請選擇儲存網頁)，並選擇「網頁，單一檔案」即可。");
+                setStatus("❌ 下載失敗，請使用瀏覽器內建的儲存功能。");
             }
         }
 
