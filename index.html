@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="貼圖切割">
-    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgZmlsbD0iIzI1NjNlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTIlIiBkeT0iLjM1ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMzAwIiBmaWxsPSJ3aGl0ZSI+4pyCPC90ZXh0Pjwvc3ZnPg==">
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgZmlsbD0iIzI1NjNlYiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkeT0iLjM1ZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtc2l6ZT0iMzAwIiBmaWxsPSJ3aGl0ZSI+4pyCPC90ZXh0Pjwvc3ZnPg==">
     
     <!-- 引入外部 Manifest (為了能真正安裝到 App 抽屜) -->
     <link rel="manifest" href="manifest.json">
@@ -93,16 +93,16 @@
                         <div>
                             <label class="flex justify-between text-[11px] text-slate-600 mb-1">
                                 <span class="flex items-center gap-1">過濾最小面積 <i class="info-icon" data-info="minArea"></i></span>
-                                <span id="minAreaVal">3000</span>
+                                <span id="minAreaVal">100</span>
                             </label>
-                            <input type="range" id="minArea" min="0" max="200000" step="500" value="3000" class="w-full accent-blue-500">
+                            <input type="range" id="minArea" min="0" max="50000" step="10" value="100" class="w-full accent-blue-500">
                         </div>
                         <div>
                             <label class="flex justify-between text-[11px] text-slate-600 mb-1">
                                 <span class="flex items-center gap-1">合併鄰近距離 <i class="info-icon" data-info="mergeDist"></i></span>
-                                <span id="mergeDistVal">24</span>
+                                <span id="mergeDistVal">10</span>
                             </label>
-                            <input type="range" id="mergeDist" min="0" max="200" step="2" value="24" class="w-full accent-blue-500">
+                            <input type="range" id="mergeDist" min="0" max="200" step="2" value="10" class="w-full accent-blue-500">
                         </div>
                         <p class="text-[10px] text-blue-500 mt-[-4px] leading-tight text-center">調整數值後，請點擊下方按鈕套用👇</p>
                     </div>
@@ -215,7 +215,7 @@
             </button>
 
             <!-- 單機版下載按鈕 -->
-            <button id="downloadOfflineBtn" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-4 rounded shadow transition-colors text-xs mt-1 flex justify-center items-center gap-1">
+            <button id="downloadOfflineBtn" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-4 rounded shadow transition-colors text-xs mt-1 flex justify-center items-center gap-1" onclick="downloadOfflineHTML()">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                 下載「單機網頁版 (HTML)」
             </button>
@@ -277,36 +277,6 @@
 
     <script>
         // ==========================================
-        // PWA 註冊邏輯
-        // ==========================================
-        let deferredPrompt;
-        window.addEventListener('load', () => {
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('./sw.js').catch(err => {
-                    console.log('SW registration failed:', err);
-                });
-            }
-        });
-
-        const installBtn = document.getElementById('installAppBtn');
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            if(installBtn) installBtn.classList.remove('hidden');
-        });
-
-        if(installBtn) {
-            installBtn.addEventListener('click', async () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
-                    if (outcome === 'accepted') installBtn.classList.add('hidden');
-                    deferredPrompt = null;
-                }
-            });
-        }
-
-        // ==========================================
         // UI 說明字典與圖示注入邏輯
         // ==========================================
         const infoData = {
@@ -367,7 +337,7 @@
             toolMode: 'box', 
             drag: { active: false, action: null, startX: 0, startY: 0, origBox: null },
             params: {
-                enableAutoBg: true, bgThreshold: 240, minArea: 3000, mergeDist: 24,
+                enableAutoBg: true, bgThreshold: 240, minArea: 100, mergeDist: 10,
                 padding: 20, borderW: 8, borderC: '#FFFFFF', lineOptimize: true, lineMaxW: 370, lineMaxH: 320
             }
         };
@@ -530,7 +500,7 @@
         }
 
         // ==========================================
-        // 單機版檔案下載 (不呼叫 fetch 以免被 CORS/CSP 阻擋)
+        // 單機版檔案下載
         // ==========================================
         async function downloadOfflineHTML() {
             if (location.protocol === 'file:') {
@@ -540,13 +510,8 @@
 
             setStatus("正在產生單機網頁版...", true);
             try {
-                // 不使用 fetch 抓取外部資源以避免瀏覽器或 Canvas 安全沙盒阻擋。
-                // 直接擷取當前網頁的 HTML 結構，保留 CDN 連結。
                 let html = '<!DOCTYPE html>\n<html lang="zh-TW">\n' + document.documentElement.innerHTML + '\n</html>';
-                
-                // 清理動態產生的樣式，保持原始 CDN 引入即可
                 html = html.replace(/<style id="tailwind[^>]*>.*?<\/style>/gis, '');
-
                 const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -709,7 +674,7 @@
                             }
                         }
                     }
-                    blobs.push({ left: minX, top: minY, right: maxX, bottom: maxY, area: (maxX-minX)*(maxY-minY) });
+                    blobs.push({ left: minX, top: minY, right: maxX + 1, bottom: maxY + 1, area: (maxX - minX + 1) * (maxY - minY + 1) });
                 }
             }
             return blobs;
@@ -859,8 +824,8 @@
         }
 
         function calculateFinalDimensions(box) {
-            const cropW = Math.floor(box.right - box.left);
-            const cropH = Math.floor(box.bottom - box.top);
+            const cropW = Math.max(1, Math.floor(box.right - box.left));
+            const cropH = Math.max(1, Math.floor(box.bottom - box.top));
             const margin = state.params.padding + state.params.borderW;
             let rawW = cropW + margin * 2, rawH = cropH + margin * 2;
             let scale = 1.0;
@@ -1076,7 +1041,7 @@
                     const realIdx = (mode === 'single' && state.selectedIndex !== null) ? state.selectedIndex : iterationIdx;
                     
                     const pad = state.params.padding, borderW = state.params.borderW, colorHex = state.params.borderC;
-                    const cropW = Math.floor(box.right - box.left), cropH = Math.floor(box.bottom - box.top);
+                    const cropW = Math.max(1, Math.floor(box.right - box.left)), cropH = Math.max(1, Math.floor(box.bottom - box.top));
                     const margin = pad + borderW;
                     
                     const rawW = cropW + margin * 2;
@@ -1174,6 +1139,43 @@
                 }
             }, 50);
         }
+
+        // ==========================================
+        // PWA 註冊邏輯
+        // ==========================================
+        let deferredPrompt;
+        window.addEventListener('load', () => {
+            // 要讓 GitHub PWA 生效，需另外上傳 sw.js
+            if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+                navigator.serviceWorker.register('sw.js').then(() => {
+                    console.log('SW 註冊成功');
+                }).catch(err => {
+                    console.log('SW registration fallback warning:', err);
+                });
+            }
+        });
+
+        const installBtn = document.getElementById('installAppBtn');
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if(installBtn) installBtn.classList.remove('hidden');
+        });
+
+        if(installBtn) {
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') installBtn.classList.add('hidden');
+                    deferredPrompt = null;
+                }
+            });
+        }
+
+        // ====== 啟動應用程式 ======
+        init();
+
     </script>
 </body>
 </html>
